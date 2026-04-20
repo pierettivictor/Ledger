@@ -13409,6 +13409,7 @@ function ExpenseTracker() {
   const [confirmReset, setConfirmReset] = useState(false);
   const [showAddCatInTray, setShowAddCatInTray] = useState(false);
   const [expandedCat, setExpandedCat] = useState(null);
+  const [expandedVendor, setExpandedVendor] = useState(null);
   const [expandedDashCat, setExpandedDashCat] = useState(null);
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [skippedVendors, setSkippedVendors] = useState(/* @__PURE__ */ new Set());
@@ -13428,24 +13429,11 @@ function ExpenseTracker() {
     }));
   }, [vendorMap]);
   useEffect(() => {
-    const WF_PATTERNS = [
-      /purchase authorized on/i,
-      /recurring purchase/i,
-      /ach debit/i,
-      /online transfer/i,
-      /atm withdrawal/i,
-      /check crd purchase/i,
-      /visa purchase/i,
-      /pos purchase/i
-    ];
     setTransactions((prev) => {
-      const needsUpdate = prev.some((t) => !t.source && t.description && WF_PATTERNS.some((p) => p.test(t.description)));
+      const needsUpdate = prev.some((t) => t.imported && !t.source);
       if (!needsUpdate) return prev;
       return prev.map((t) => {
-        if (t.source) return t;
-        if (t.description && WF_PATTERNS.some((p) => p.test(t.description))) {
-          return { ...t, source: "Wells Fargo" };
-        }
+        if (t.imported && !t.source) return { ...t, source: "Wells Fargo" };
         return t;
       });
     });
@@ -13493,7 +13481,14 @@ function ExpenseTracker() {
       return acc;
     }, {})
   ).sort((a, b) => b.total - a.total);
-  const allSources = [...new Set(transactions.map((t) => t.source).filter(Boolean))].sort();
+  const SOURCE_PRIORITY = ["wells fargo", "apple", "chase", "cuban palms"];
+  const allSources = [...new Set(transactions.map((t) => t.source).filter(Boolean))].sort((a, b) => {
+    const ai = SOURCE_PRIORITY.findIndex((p) => a.toLowerCase().includes(p));
+    const bi = SOURCE_PRIORITY.findIndex((p) => b.toLowerCase().includes(p));
+    const ar = ai === -1 ? 99 : ai;
+    const br = bi === -1 ? 99 : bi;
+    return ar !== br ? ar - br : a.localeCompare(b);
+  });
   const curMonthDate = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
   const periodLabel = () => {
     if (period === "all") return "All Time";
@@ -14061,7 +14056,29 @@ function ExpenseTracker() {
         flexShrink: 0,
         marginLeft: 2,
         color: isCredit ? T.green : isTransfer ? T.text3 : T.text2
-      } }, isCredit ? "\u2212" : "", "$", fmt$(t.amount)), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }), !editMode && /* @__PURE__ */ React.createElement("div", { onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement(
+      } }, isCredit ? "\u2212" : "", "$", fmt$(t.amount)), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }), !editMode && /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          onClick: (e) => {
+            e.stopPropagation();
+            updateTxCategory(t.id, t.category === "Shared" ? "" : "Shared");
+          },
+          style: {
+            fontSize: 10,
+            padding: "2px 7px",
+            borderRadius: 10,
+            border: `1px solid ${t.category === "Shared" ? T.orange : T.border}`,
+            background: t.category === "Shared" ? `${T.orange}20` : "none",
+            color: t.category === "Shared" ? T.orange : T.text4,
+            fontWeight: 600,
+            cursor: "pointer",
+            fontFamily: "inherit",
+            flexShrink: 0,
+            transition: "all .15s"
+          }
+        },
+        "\xBD"
+      ), !editMode && /* @__PURE__ */ React.createElement("div", { onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement(
         "select",
         {
           value: t.category || "",
@@ -14087,7 +14104,7 @@ function ExpenseTracker() {
     );
   }))), view === "categories" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, marginBottom: 16, alignItems: "center" } }, /* @__PURE__ */ React.createElement("input", { placeholder: "New category name\u2026", value: newCat, onChange: (e) => setNewCat(e.target.value), onKeyDown: (e) => e.key === "Enter" && addCategory(), style: { flex: 1, maxWidth: 280 } }), /* @__PURE__ */ React.createElement("button", { className: "action-btn", onClick: addCategory }, "Add")), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 14, overflow: "hidden", boxShadow: T.shadow } }, categories.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: 32, textAlign: "center", color: T.text4, fontSize: 13 } }, "No categories yet."), [...categories].sort((a, b) => a.localeCompare(b)).map((cat, i, arr) => {
     const color = getCatColor(cat);
-    const catTxs = transactions.filter((t) => t.category === cat);
+    const catTxs = rangeTxs.filter((t) => t.category === cat);
     const total = catTxs.reduce((s, t) => s + t.amount, 0);
     const isExpanded = expandedCat === cat;
     const vendorGroups = Object.values(
@@ -14102,7 +14119,12 @@ function ExpenseTracker() {
     return /* @__PURE__ */ React.createElement("div", { key: cat, style: { borderBottom: i < arr.length - 1 ? `1px solid ${T.border}` : "none" } }, /* @__PURE__ */ React.createElement(
       "div",
       {
-        onClick: () => setExpandedCat(isExpanded ? null : cat),
+        onClick: () => {
+          if (isExpanded) {
+            setExpandedCat(null);
+            setExpandedVendor(null);
+          } else setExpandedCat(cat);
+        },
         style: { display: "flex", alignItems: "center", gap: 12, padding: "13px 16px", cursor: "pointer", background: isExpanded ? `${color}08` : T.bgCard, transition: "background .15s" }
       },
       /* @__PURE__ */ React.createElement("div", { style: { width: 10, height: 10, borderRadius: "50%", background: color, flexShrink: 0 } }),
@@ -14124,12 +14146,13 @@ function ExpenseTracker() {
         "\xD7"
       )
     ), isExpanded && /* @__PURE__ */ React.createElement("div", { style: { borderTop: `1px solid ${color}33`, background: `${color}05` } }, vendorGroups.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 16px", fontSize: 13, color: T.text4, textAlign: "center" } }, "No transactions") : vendorGroups.map((vg, vi) => {
-      const vExpanded = expandedCat === cat + "|" + vg.key;
+      const vKey = cat + "|" + vg.key;
+      const vExpanded = expandedVendor === vKey;
       const txsSorted = [...vg.txs].sort((a, b) => b.date.localeCompare(a.date));
       return /* @__PURE__ */ React.createElement("div", { key: vg.key, style: { borderBottom: vi < vendorGroups.length - 1 ? `1px solid ${color}22` : "none" } }, /* @__PURE__ */ React.createElement(
         "div",
         {
-          onClick: () => setExpandedCat(vExpanded ? cat : cat + "|" + vg.key),
+          onClick: () => setExpandedVendor(vExpanded ? null : vKey),
           style: { display: "flex", alignItems: "center", gap: 10, padding: "10px 16px 10px 36px", cursor: "pointer", background: vExpanded ? `${color}12` : "transparent", transition: "background .12s" }
         },
         /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, vg.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text3, marginTop: 1 } }, vg.txs.length, " transaction", vg.txs.length !== 1 ? "s" : "")),
