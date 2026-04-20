@@ -12783,7 +12783,44 @@ react-dom/cjs/react-dom-client.production.js:
 </script>
   <script>const { useState, useEffect, useRef, useCallback } = React;
 const STORAGE_KEY = "expense-tracker-data";
-const DEFAULT_CATEGORIES = ["Car", "Cuban Palms", "Entertainment", "Food", "Health", "Housing", "Other", "Personal Care", "Shopping", "Shared", "Subscriptions", "Transport", "Transfer", "Utilities"];
+const DEFAULT_CATEGORIES = [
+  "Car",
+  "Care",
+  "Credit",
+  "Cuban Palms",
+  "Delete",
+  "Dinner",
+  "Drinks",
+  "Education",
+  "Entertainment",
+  "Fees",
+  "Food",
+  "Gas",
+  "Gift",
+  "Grocery",
+  "Health",
+  "Home",
+  "Insurance",
+  "Loans",
+  "Lola",
+  "Luca",
+  "Misc",
+  "Other",
+  "Parking",
+  "Rent",
+  "Shared",
+  "Shopping",
+  "Subscription",
+  "Take Out",
+  "Taxes",
+  "Toll",
+  "Transfer",
+  "Transit",
+  "Travel",
+  "Unknown",
+  "Utilities",
+  "Wardrobe"
+];
 const COLORS = ["#FF3B30", "#FF9500", "#FFCC00", "#34C759", "#00C7BE", "#007AFF", "#5856D6", "#AF52DE", "#FF2D55", "#8E8E93"];
 const T = {
   bg: "#F2F2F7",
@@ -13347,7 +13384,8 @@ async function xlsxToCSV(uint8arr) {
 function ExpenseTracker() {
   const saved = loadData();
   const [transactions, setTransactions] = useState((saved == null ? void 0 : saved.transactions) || []);
-  const [categories, setCategories] = useState((saved == null ? void 0 : saved.categories) || DEFAULT_CATEGORIES);
+  const mergedCats = (saved == null ? void 0 : saved.categories) ? [.../* @__PURE__ */ new Set([...saved.categories, ...DEFAULT_CATEGORIES])].sort((a, b) => a.localeCompare(b)) : DEFAULT_CATEGORIES;
+  const [categories, setCategories] = useState(mergedCats);
   const [catColors, setCatColors] = useState((saved == null ? void 0 : saved.catColors) || {});
   const [vendorMap, setVendorMap] = useState((saved == null ? void 0 : saved.vendorMap) || {});
   const [view, setView] = useState("dashboard");
@@ -13389,6 +13427,29 @@ function ExpenseTracker() {
       return vendorMap[key] ? { ...t, category: vendorMap[key] } : t;
     }));
   }, [vendorMap]);
+  useEffect(() => {
+    const WF_PATTERNS = [
+      /purchase authorized on/i,
+      /recurring purchase/i,
+      /ach debit/i,
+      /online transfer/i,
+      /atm withdrawal/i,
+      /check crd purchase/i,
+      /visa purchase/i,
+      /pos purchase/i
+    ];
+    setTransactions((prev) => {
+      const needsUpdate = prev.some((t) => !t.source && t.description && WF_PATTERNS.some((p) => p.test(t.description)));
+      if (!needsUpdate) return prev;
+      return prev.map((t) => {
+        if (t.source) return t;
+        if (t.description && WF_PATTERNS.some((p) => p.test(t.description))) {
+          return { ...t, source: "Wells Fargo" };
+        }
+        return t;
+      });
+    });
+  }, []);
   const getCatColor = (cat) => catColors[cat] || COLORS[categories.indexOf(cat) % COLORS.length] || T.text3;
   const now = /* @__PURE__ */ new Date();
   const curRange = period === "custom" ? customStart && customEnd ? { start: parseDateStr(customStart), end: parseDateStr(customEnd) } : null : period === "month" ? (() => {
