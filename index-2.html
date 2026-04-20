@@ -13566,6 +13566,16 @@ function ExpenseTracker() {
   const updateTxCategory = (id, cat) => setTransactions((prev) => prev.map((t) => t.id === id ? { ...t, category: cat } : t));
   const updateTxSource = (id, src) => setTransactions((prev) => prev.map((t) => t.id === id ? { ...t, source: src } : t));
   const toggleShared = (id) => setTransactions((prev) => prev.map((t) => t.id === id ? { ...t, shared: !t.shared } : t));
+  const toggleVendorShared = (vendorKey) => setTransactions((prev) => {
+    const vendorTxs = prev.filter((t) => t.description.trim().toLowerCase() === vendorKey);
+    const allShared = vendorTxs.every((t) => t.shared);
+    return prev.map((t) => t.description.trim().toLowerCase() === vendorKey ? { ...t, shared: !allShared } : t);
+  });
+  const toggleCardShared = (src) => setTransactions((prev) => {
+    const cardTxs = prev.filter((t) => (t.source || "No Source") === src);
+    const allShared = cardTxs.every((t) => t.shared);
+    return prev.map((t) => (t.source || "No Source") === src ? { ...t, shared: !allShared } : t);
+  });
   const addCategory = () => {
     const t = newCat.trim();
     if (!t || categories.includes(t)) return;
@@ -13950,13 +13960,56 @@ function ExpenseTracker() {
       },
       "\xD7"
     ))));
-  })(), vendorTab === "list" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("input", { placeholder: "Search vendors\u2026", value: vendorSearch, onChange: (e) => setVendorSearch(e.target.value), style: { width: "100%", marginBottom: 12 } }), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 14, overflow: "hidden", boxShadow: T.shadow } }, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 80px 90px 24px", gap: 0, padding: "9px 16px", borderBottom: `1px solid ${T.border}`, background: T.bg } }, ["Vendor", "Txns", "Total", ""].map((h) => /* @__PURE__ */ React.createElement("div", { key: h, style: { fontSize: 10, color: T.text4, textTransform: "uppercase", letterSpacing: ".1em", fontWeight: 600 } }, h))), vendors.filter((v) => !vendorSearch || v.name.toLowerCase().includes(vendorSearch.toLowerCase())).map((v) => /* @__PURE__ */ React.createElement("div", { key: v.key, className: "vendor-row", onClick: () => setSelectedVendor(v) }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, v.name), v.category && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: getCatColor(v.category), fontWeight: 600 } }, v.category), !v.category && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4 } }, "Uncategorized")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: T.text3, textAlign: "right" } }, v.count), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 600, color: T.accent, textAlign: "right" } }, "$", fmt$(v.total)), /* @__PURE__ */ React.createElement("div", { style: { color: T.text4, fontSize: 16, textAlign: "right" } }, "\u203A"))))), vendorTab === "sorted" && /* @__PURE__ */ React.createElement("div", { style: { paddingBottom: 120 } }, /* @__PURE__ */ React.createElement("input", { placeholder: "Search assigned vendors\u2026", value: vendorSearch, onChange: (e) => setVendorSearch(e.target.value), style: { width: "100%", marginBottom: 12 } }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 7, marginBottom: 14, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setSortedFilter(""), style: { background: !sortedFilter ? T.accent : "none", border: `1px solid ${!sortedFilter ? T.accent : T.border}`, color: !sortedFilter ? "#fff" : T.text3, borderRadius: 20, padding: "4px 14px", fontSize: 12, fontFamily: "inherit", cursor: "pointer", fontWeight: 500, transition: "all .15s" } }, "All"), [...categories].sort((a, b) => a.localeCompare(b)).filter((c) => categorizedVendors.some((v) => v.category === c)).map((cat) => {
+  })(), vendorTab === "list" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("input", { placeholder: "Search vendors\u2026", value: vendorSearch, onChange: (e) => setVendorSearch(e.target.value), style: { width: "100%", marginBottom: 12 } }), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 14, overflow: "hidden", boxShadow: T.shadow } }, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 80px 90px 24px", gap: 0, padding: "9px 16px", borderBottom: `1px solid ${T.border}`, background: T.bg } }, ["Vendor", "Txns", "Total", ""].map((h) => /* @__PURE__ */ React.createElement("div", { key: h, style: { fontSize: 10, color: T.text4, textTransform: "uppercase", letterSpacing: ".1em", fontWeight: 600 } }, h))), vendors.filter((v) => !vendorSearch || v.name.toLowerCase().includes(vendorSearch.toLowerCase())).map((v) => {
+    const vendorShared = transactions.filter((t) => t.description.trim().toLowerCase() === v.key).every((t) => t.shared) && v.count > 0;
+    return /* @__PURE__ */ React.createElement("div", { key: v.key, className: "vendor-row", style: { display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", borderBottom: `1px solid ${T.border}`, cursor: "pointer", background: T.bgCard }, onClick: () => setSelectedVendor(v) }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, v.name), v.category && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: getCatColor(v.category), fontWeight: 600 } }, v.category), !v.category && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4 } }, "Uncategorized")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: T.text3, textAlign: "right" } }, v.count), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 600, color: T.accent, textAlign: "right" } }, "$", fmt$(v.total)), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: (e) => {
+          e.stopPropagation();
+          toggleVendorShared(v.key);
+        },
+        style: {
+          fontSize: 10,
+          padding: "2px 7px",
+          borderRadius: 10,
+          border: `1px solid ${vendorShared ? T.orange : T.border}`,
+          background: vendorShared ? `${T.orange}20` : "none",
+          color: vendorShared ? T.orange : T.text4,
+          fontWeight: 600,
+          cursor: "pointer",
+          fontFamily: "inherit",
+          flexShrink: 0
+        }
+      },
+      "\xBD"
+    ), /* @__PURE__ */ React.createElement("div", { style: { color: T.text4, fontSize: 16, textAlign: "right" } }, "\u203A"));
+  }))), vendorTab === "sorted" && /* @__PURE__ */ React.createElement("div", { style: { paddingBottom: 120 } }, /* @__PURE__ */ React.createElement("input", { placeholder: "Search assigned vendors\u2026", value: vendorSearch, onChange: (e) => setVendorSearch(e.target.value), style: { width: "100%", marginBottom: 12 } }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 7, marginBottom: 14, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setSortedFilter(""), style: { background: !sortedFilter ? T.accent : "none", border: `1px solid ${!sortedFilter ? T.accent : T.border}`, color: !sortedFilter ? "#fff" : T.text3, borderRadius: 20, padding: "4px 14px", fontSize: 12, fontFamily: "inherit", cursor: "pointer", fontWeight: 500, transition: "all .15s" } }, "All"), [...categories].sort((a, b) => a.localeCompare(b)).filter((c) => categorizedVendors.some((v) => v.category === c)).map((cat) => {
     const color = getCatColor(cat);
     const on = sortedFilter === cat;
     return /* @__PURE__ */ React.createElement("button", { key: cat, onClick: () => setSortedFilter(on ? "" : cat), style: { background: on ? color : "none", border: `1px solid ${on ? color : T.border}`, color: on ? "#fff" : T.text3, borderRadius: 20, padding: "4px 14px", fontSize: 12, fontFamily: "inherit", cursor: "pointer", fontWeight: 500, transition: "all .15s" } }, cat);
   })), filteredSorted.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: 40, color: T.text4, fontSize: 13 } }, "No sorted vendors yet.") : /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 14, overflow: "hidden", boxShadow: T.shadow } }, filteredSorted.map((vendor, i) => {
     const color = getCatColor(vendor.category);
-    return /* @__PURE__ */ React.createElement("div", { key: vendor.key, style: { display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: i < filteredSorted.length - 1 ? `1px solid ${T.border}` : "none", background: T.bgCard } }, /* @__PURE__ */ React.createElement("div", { style: { width: 8, height: 8, borderRadius: "50%", background: color, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0, cursor: "pointer" }, onClick: () => setSelectedVendor(vendor) }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: T.text } }, vendor.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text3, marginTop: 1 } }, vendor.count, " tx \xB7 $", fmt$(vendor.total))), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color, background: `${color}15`, border: `1px solid ${color}33`, borderRadius: 12, padding: "2px 9px", fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap" } }, vendor.category), /* @__PURE__ */ React.createElement(
+    const vendorShared = transactions.filter((t) => t.description.trim().toLowerCase() === vendor.key).every((t) => t.shared) && vendor.count > 0;
+    return /* @__PURE__ */ React.createElement("div", { key: vendor.key, style: { display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: i < filteredSorted.length - 1 ? `1px solid ${T.border}` : "none", background: T.bgCard } }, /* @__PURE__ */ React.createElement("div", { style: { width: 8, height: 8, borderRadius: "50%", background: color, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0, cursor: "pointer" }, onClick: () => setSelectedVendor(vendor) }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: T.text } }, vendor.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text3, marginTop: 1 } }, vendor.count, " tx \xB7 $", fmt$(vendor.total))), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => toggleVendorShared(vendor.key),
+        style: {
+          fontSize: 10,
+          padding: "2px 7px",
+          borderRadius: 10,
+          border: `1px solid ${vendorShared ? T.orange : T.border}`,
+          background: vendorShared ? `${T.orange}20` : "none",
+          color: vendorShared ? T.orange : T.text4,
+          fontWeight: 600,
+          cursor: "pointer",
+          fontFamily: "inherit",
+          flexShrink: 0
+        }
+      },
+      "\xBD"
+    ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color, background: `${color}15`, border: `1px solid ${color}33`, borderRadius: 12, padding: "2px 9px", fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap" } }, vendor.category), /* @__PURE__ */ React.createElement(
       "button",
       {
         onClick: () => unassignVendor(vendor.key),
@@ -14116,26 +14169,36 @@ function ExpenseTracker() {
     return sourceOrder.map((src) => {
       const txs = grouped[src];
       const collapsed = collapsedCards.has(src);
-      const srcTotal = txs.reduce((s, t) => s + t.amount, 0);
-      return /* @__PURE__ */ React.createElement("div", { key: src }, /* @__PURE__ */ React.createElement(
-        "div",
+      const srcDisplayTotal = txs.filter((t) => t.category !== BUSINESS_CAT).reduce((s, t) => s + t.amount, 0);
+      const allShared = txs.length > 0 && txs.every((t) => t.shared);
+      return /* @__PURE__ */ React.createElement("div", { key: src }, /* @__PURE__ */ React.createElement("div", { style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "9px 14px",
+        background: T.bg,
+        borderBottom: `1px solid ${T.border}`,
+        borderTop: `2px solid ${T.accent}22`
+      } }, /* @__PURE__ */ React.createElement("span", { onClick: () => toggleCard(src), style: { fontSize: 12, fontWeight: 700, color: T.accent, flex: 1, cursor: "pointer" } }, src), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text3 } }, txs.length, " tx \xB7 $", fmt$(srcDisplayTotal)), /* @__PURE__ */ React.createElement(
+        "button",
         {
-          onClick: () => toggleCard(src),
+          onClick: () => toggleCardShared(src),
           style: {
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            padding: "9px 14px",
-            background: T.bg,
-            borderBottom: `1px solid ${T.border}`,
+            fontSize: 10,
+            padding: "2px 7px",
+            borderRadius: 10,
+            border: `1px solid ${allShared ? T.orange : T.border}`,
+            background: allShared ? `${T.orange}20` : "none",
+            color: allShared ? T.orange : T.text4,
+            fontWeight: 600,
             cursor: "pointer",
-            borderTop: `2px solid ${T.accent}22`
+            fontFamily: "inherit",
+            flexShrink: 0,
+            marginLeft: 4
           }
         },
-        /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: T.accent, flex: 1 } }, src),
-        /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text3 } }, txs.length, " tx \xB7 $", fmt$(srcTotal)),
-        /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: T.text4, marginLeft: 6 } }, collapsed ? "\u25B8" : "\u25BE")
-      ), !collapsed && txs.map(renderTxRow));
+        "\xBD"
+      ), /* @__PURE__ */ React.createElement("span", { onClick: () => toggleCard(src), style: { fontSize: 12, color: T.text4, marginLeft: 4, cursor: "pointer" } }, collapsed ? "\u25B8" : "\u25BE")), !collapsed && txs.map(renderTxRow));
     });
   })())), view === "categories" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, marginBottom: 16, alignItems: "center" } }, /* @__PURE__ */ React.createElement("input", { placeholder: "New category name\u2026", value: newCat, onChange: (e) => setNewCat(e.target.value), onKeyDown: (e) => e.key === "Enter" && addCategory(), style: { flex: 1, maxWidth: 280 } }), /* @__PURE__ */ React.createElement("button", { className: "action-btn", onClick: addCategory }, "Add")), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 14, overflow: "hidden", boxShadow: T.shadow } }, categories.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: 32, textAlign: "center", color: T.text4, fontSize: 13 } }, "No categories yet."), [...categories].sort((a, b) => a.localeCompare(b)).map((cat, i, arr) => {
     const color = getCatColor(cat);
