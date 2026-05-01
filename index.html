@@ -13069,14 +13069,23 @@ function parseCSV(text, filename) {
     });
     const rawAmt = row[amtKey] || "0";
     const amount = parseFloat(rawAmt.replace(/[$,\s]/g, "")) || 0;
-    let absAmount = Math.abs(amount);
-    if (absAmount === 0) return null;
+    if (amount === 0) return null;
+    let finalAmount;
+    let isNegativeCredit = false;
+    if (bank === "Apple Card") {
+      isNegativeCredit = amount < 0;
+      finalAmount = Math.abs(amount);
+    } else {
+      isNegativeCredit = amount > 0;
+      finalAmount = Math.abs(amount);
+    }
+    if (finalAmount === 0) return null;
     let source = bank;
     if (bank === "Wells Fargo") {
       source = wfAccount ? `Wells Fargo \xB7\xB7\xB7${wfAccount}` : "Wells Fargo";
     }
     const description = (descKey ? row[descKey] : "") || cleaned.find((v) => v && v.length > 2 && isNaN(parseFloat(v.replace(/[$,]/g, "")))) || "Unknown";
-    const autoCategory = detectAutoCategory(description, memoKey ? row[memoKey] || "" : "");
+    const autoCategory = isNegativeCredit ? "Credit" : detectAutoCategory(description, memoKey ? row[memoKey] || "" : "");
     let dateVal = dateKey ? row[dateKey] || "" : "";
     if (!dateVal) {
       dateVal = cleaned.find((v) => /\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/.test(v) || /\d{4}[\/\-]\d{2}[\/\-]\d{2}/.test(v)) || "";
@@ -13087,7 +13096,7 @@ function parseCSV(text, filename) {
       date: dateVal,
       description: description.trim(),
       memo: memoKey ? row[memoKey] || "" : "",
-      amount: absAmount,
+      amount: finalAmount,
       category: autoCategory,
       source,
       imported: true
@@ -13425,22 +13434,25 @@ function ExpenseTracker() {
   const prevRange = period === "all" || !curRange ? null : getPrevRange(period, curRange);
   const rangeTxs = filterByRange(transactions, curRange);
   const prevTxs = filterByRange(transactions, prevRange);
-  const spendingTxs = rangeTxs.filter((t) => !NON_SPENDING_CATS.has(t.category));
-  const prevSpendingTxs = prevTxs.filter((t) => !NON_SPENDING_CATS.has(t.category));
+  const spendingTxs = rangeTxs.filter((t) => t.category !== "Transfer");
+  const prevSpendingTxs = prevTxs.filter((t) => t.category !== "Transfer");
   const BUSINESS_CAT = "Cuban Palms";
   const SHARED_CAT = "Shared";
   const businessTxs = spendingTxs.filter((t) => t.category === BUSINESS_CAT);
   const sharedTxs = spendingTxs.filter((t) => t.shared && t.category !== BUSINESS_CAT);
-  const personalTxs = spendingTxs.filter((t) => !t.shared && t.category !== BUSINESS_CAT);
+  const creditTxs = spendingTxs.filter((t) => t.category === "Credit" && !t.shared && t.category !== BUSINESS_CAT);
+  const personalTxs = spendingTxs.filter((t) => !t.shared && t.category !== BUSINESS_CAT && t.category !== "Credit");
   const businessTotal = businessTxs.reduce((s, t) => s + t.amount, 0);
   const sharedFullTotal = sharedTxs.reduce((s, t) => s + t.amount, 0);
   const sharedMyTotal = sharedFullTotal * 0.5;
-  const personalTotal = personalTxs.reduce((s, t) => s + t.amount, 0);
+  const creditTotal = creditTxs.reduce((s, t) => s + t.amount, 0);
+  const personalTotal = personalTxs.reduce((s, t) => s + t.amount, 0) - creditTotal;
   const myTotal = personalTotal + sharedMyTotal;
   const prevBusinessTxs = prevSpendingTxs.filter((t) => t.category === BUSINESS_CAT);
   const prevSharedTxs = prevSpendingTxs.filter((t) => t.shared && t.category !== BUSINESS_CAT);
-  const prevPersonalTxs = prevSpendingTxs.filter((t) => !t.shared && t.category !== BUSINESS_CAT);
-  const prevMyTotal = prevPersonalTxs.reduce((s, t) => s + t.amount, 0) + prevSharedTxs.reduce((s, t) => s + t.amount, 0) * 0.5;
+  const prevCreditTxs = prevSpendingTxs.filter((t) => t.category === "Credit" && !t.shared && t.category !== BUSINESS_CAT);
+  const prevPersonalTxs = prevSpendingTxs.filter((t) => !t.shared && t.category !== BUSINESS_CAT && t.category !== "Credit");
+  const prevMyTotal = prevPersonalTxs.reduce((s, t) => s + t.amount, 0) - prevCreditTxs.reduce((s, t) => s + t.amount, 0) + prevSharedTxs.reduce((s, t) => s + t.amount, 0) * 0.5;
   const prevBusinessTotal = prevBusinessTxs.reduce((s, t) => s + t.amount, 0);
   const curTotal = myTotal;
   const prevTotal = prevMyTotal;
@@ -13730,7 +13742,16 @@ function ExpenseTracker() {
         @keyframes modalIn{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
         @keyframes slideUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
         @keyframes dropIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
-      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 16px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 18, fontWeight: 700, letterSpacing: "-.3px", flexShrink: 0 } }, "Ledger"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 1 } }, ["dashboard", "categories", "transactions", "vendors"].map((v) => /* @__PURE__ */ React.createElement("button", { key: v, className: `nav-btn ${view === v ? "active" : ""}`, onClick: () => setView(v), style: { textTransform: "capitalize" } }, v))), /* @__PURE__ */ React.createElement("div", { style: { position: "relative", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setShowPeriodPicker((p) => !p), style: {
+      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px 8px", display: "flex", alignItems: "center", gap: 4, justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, letterSpacing: "-.3px", flexShrink: 0 } }, "Ledger"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 0, flexShrink: 0 } }, ["dashboard", "categories", "transactions", "vendors"].map((v) => /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      key: v,
+      className: `nav-btn ${view === v ? "active" : ""}`,
+      onClick: () => setView(v),
+      style: { textTransform: "capitalize", fontSize: 12, padding: "5px 9px" }
+    },
+    v
+  )))), /* @__PURE__ */ React.createElement("div", { style: { padding: "0 12px 8px", display: "flex", alignItems: "center", gap: 8, borderTop: `1px solid ${T.border}` } }, /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setShowPeriodPicker((p) => !p), style: {
     display: "flex",
     alignItems: "center",
     gap: 5,
@@ -13742,17 +13763,18 @@ function ExpenseTracker() {
     fontWeight: 600,
     color: T.text,
     fontFamily: "inherit",
-    cursor: "pointer"
-  } }, period === "month" ? fmtMonth(curMonthDate) : period === "week" ? "Week" : period === "ytd" ? "YTD" : period === "all" ? "All Time" : "Custom", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, color: T.text4 } }, "\u25BE")), showPeriodPicker && /* @__PURE__ */ React.createElement("div", { style: {
+    cursor: "pointer",
+    whiteSpace: "nowrap"
+  } }, period === "month" ? fmtMonth(curMonthDate) : period === "week" ? "Week" : period === "ytd" ? "YTD" : period === "all" ? "All Time" : "Custom", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, color: T.text4, marginLeft: 2 } }, "\u25BE")), showPeriodPicker && /* @__PURE__ */ React.createElement("div", { style: {
     position: "absolute",
-    right: 0,
+    left: 0,
     top: "calc(100% + 6px)",
     background: T.bgCard,
     border: `1px solid ${T.border}`,
-    borderRadius: 14,
-    boxShadow: "0 8px 30px rgba(0,0,0,.12)",
+    borderRadius: 12,
+    boxShadow: "0 8px 24px rgba(0,0,0,.10)",
     zIndex: 200,
-    minWidth: 160,
+    minWidth: 140,
     overflow: "hidden",
     animation: "dropIn .15s ease"
   } }, [["ytd", "YTD"], ["month", "Month"], ["week", "Week"], ["all", "All Time"], ["custom", "Custom"]].map(([p, label]) => /* @__PURE__ */ React.createElement(
@@ -13768,7 +13790,7 @@ function ExpenseTracker() {
         display: "block",
         width: "100%",
         textAlign: "left",
-        padding: "11px 16px",
+        padding: "10px 14px",
         fontSize: 13,
         fontWeight: period === p ? 600 : 400,
         color: period === p ? T.accent : T.text,
@@ -13776,12 +13798,11 @@ function ExpenseTracker() {
         border: "none",
         borderBottom: `1px solid ${T.border}`,
         fontFamily: "inherit",
-        cursor: "pointer",
-        transition: "background .1s"
+        cursor: "pointer"
       }
     },
     label
-  ))))), period === "month" && /* @__PURE__ */ React.createElement("div", { style: { padding: "0 16px 10px", display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setMonthOffset((o) => o - 1), style: { background: "none", border: "none", color: T.text3, fontSize: 16, cursor: "pointer", padding: "0 4px" } }, "\u2039"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 600, color: T.text } }, fmtMonth(curMonthDate)), /* @__PURE__ */ React.createElement("button", { onClick: () => setMonthOffset((o) => Math.min(o + 1, 0)), style: { background: "none", border: "none", color: monthOffset < 0 ? T.text3 : T.text4, fontSize: 16, cursor: monthOffset < 0 ? "pointer" : "default", padding: "0 4px" } }, "\u203A")), period === "custom" && /* @__PURE__ */ React.createElement("div", { style: { padding: "0 16px 10px", display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("input", { type: "date", value: customStart, onChange: (e) => setCustomStart(e.target.value), style: { fontSize: 12, padding: "5px 10px", width: 130, borderRadius: 8 } }), /* @__PURE__ */ React.createElement("span", { style: { color: T.text3, fontSize: 12 } }, "\u2192"), /* @__PURE__ */ React.createElement("input", { type: "date", value: customEnd, onChange: (e) => setCustomEnd(e.target.value), style: { fontSize: 12, padding: "5px 10px", width: 130, borderRadius: 8 } }))), /* @__PURE__ */ React.createElement("div", { style: { background: "#1C1C1E", position: "sticky", top: 0, zIndex: 89, padding: "8px 16px", display: "flex", alignItems: "center", gap: 0, overflowX: "auto", WebkitOverflowScrolling: "touch", width: "100%" } }, /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0, paddingRight: 14, borderRight: "1px solid rgba(255,255,255,.15)", marginRight: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: "rgba(255,255,255,.5)", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".08em" } }, "My Total"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, color: "#fff", letterSpacing: "-.3px" } }, "$", fmt$(myTotal))), allSources.map((src) => {
+  )))), period === "month" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setMonthOffset((o) => o - 1), style: { background: "none", border: "none", color: T.text3, fontSize: 15, cursor: "pointer", padding: "0 4px", lineHeight: 1 } }, "\u2039"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 500, color: T.text, whiteSpace: "nowrap" } }, fmtMonth(curMonthDate)), /* @__PURE__ */ React.createElement("button", { onClick: () => setMonthOffset((o) => Math.min(o + 1, 0)), style: { background: "none", border: "none", color: monthOffset < 0 ? T.text3 : T.text4, fontSize: 15, cursor: monthOffset < 0 ? "pointer" : "default", padding: "0 4px", lineHeight: 1 } }, "\u203A")), period === "custom" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, flex: 1 } }, /* @__PURE__ */ React.createElement("input", { type: "date", value: customStart, onChange: (e) => setCustomStart(e.target.value), style: { fontSize: 11, padding: "4px 8px", flex: 1, borderRadius: 7 } }), /* @__PURE__ */ React.createElement("span", { style: { color: T.text3, fontSize: 12 } }, "\u2192"), /* @__PURE__ */ React.createElement("input", { type: "date", value: customEnd, onChange: (e) => setCustomEnd(e.target.value), style: { fontSize: 11, padding: "4px 8px", flex: 1, borderRadius: 7 } })))), /* @__PURE__ */ React.createElement("div", { style: { background: "#1C1C1E", position: "sticky", top: 0, zIndex: 89, padding: "8px 16px", display: "flex", alignItems: "center", gap: 0, overflowX: "auto", WebkitOverflowScrolling: "touch", width: "100%" } }, /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0, paddingRight: 14, borderRight: "1px solid rgba(255,255,255,.15)", marginRight: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: "rgba(255,255,255,.5)", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".08em" } }, "My Total"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, color: "#fff", letterSpacing: "-.3px" } }, "$", fmt$(myTotal))), allSources.map((src) => {
     const srcMy = personalTxs.filter((t) => t.source === src && t.category !== BUSINESS_CAT).reduce((s, t) => s + t.amount, 0) + sharedTxs.filter((t) => t.source === src).reduce((s, t) => s + t.amount, 0) * 0.5;
     if (srcMy === 0) return null;
     const shortSrc = src.includes("\xB7\xB7\xB7") ? `\xB7\xB7\xB7${src.split("\xB7\xB7\xB7")[1]}` : src.split(" ")[0];
@@ -13843,16 +13864,44 @@ function ExpenseTracker() {
       padding: "12px 0",
       borderBottom: i < importLog.length - 1 ? `1px solid ${T.border}` : "none"
     } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: T.text } }, dateStr), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text4, marginTop: 1 } }, timeStr)), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: T.accent } }, entry.imported, " imported"), entry.skipped > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text3, marginTop: 1 } }, entry.skipped, " duplicate", entry.skipped !== 1 ? "s" : "", " skipped"))), entry.files && entry.files.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 5 } }, entry.files.map((f) => /* @__PURE__ */ React.createElement("span", { key: f, style: { fontSize: 11, color: T.text3, background: T.bg, border: `1px solid ${T.border}`, borderRadius: 8, padding: "2px 8px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 } }, "\u{1F4C4} ", f))));
-  }))), view === "vendors" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 12, marginBottom: 16, alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: T.text3 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600, color: curUncat > 0 ? T.danger : T.text } }, curUncat), " uncategorized"), /* @__PURE__ */ React.createElement("span", { style: { color: T.border } }, "\xB7"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: T.text3 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600, color: T.text } }, categorizedVendors.length), " sorted"), /* @__PURE__ */ React.createElement("span", { style: { color: T.border } }, "\xB7"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: T.text3 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600, color: T.text } }, vendors.length), " vendors")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 2, background: T.border, borderRadius: 9, padding: 2, marginBottom: 14, width: "fit-content" } }, /* @__PURE__ */ React.createElement("button", { className: `tab-btn ${vendorTab === "queue" ? "active" : ""}`, onClick: () => {
-    setVendorTab("queue");
-    setVendorSearch("");
-  } }, "Queue", allUncategorized.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { background: T.danger, color: "#fff", borderRadius: 6, padding: "0 5px", fontSize: 10, marginLeft: 4 } }, allUncategorized.length)), /* @__PURE__ */ React.createElement("button", { className: `tab-btn ${vendorTab === "list" ? "active" : ""}`, onClick: () => {
-    setVendorTab("list");
-    setVendorSearch("");
-  } }, "All"), /* @__PURE__ */ React.createElement("button", { className: `tab-btn ${vendorTab === "sorted" ? "active" : ""}`, onClick: () => {
-    setVendorTab("sorted");
-    setVendorSearch("");
-  } }, "Sorted", categorizedVendors.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { background: `${T.accent}22`, color: T.accent, borderRadius: 6, padding: "0 5px", fontSize: 10, marginLeft: 4 } }, categorizedVendors.length))), vendorTab === "queue" && (allUncategorized.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "40px 20px", textAlign: "center", color: T.text3, fontSize: 13 } }, "All vendors categorized") : /* @__PURE__ */ React.createElement("div", { style: { paddingBottom: trayMinimized ? 60 : 260 } }, /* @__PURE__ */ React.createElement("input", { placeholder: "Search vendors\u2026", value: vendorSearch, onChange: (e) => setVendorSearch(e.target.value), style: { width: "100%", marginBottom: 10 } }), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 10, overflow: "hidden", opacity: trayMinimized ? 1 : 0.45, pointerEvents: trayMinimized ? "auto" : "none" } }, queueVendors.slice(0, trayMinimized ? 50 : 8).map((vendor) => /* @__PURE__ */ React.createElement("div", { key: vendor.key, className: "vq-row" }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, vendor.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text4, marginTop: 1 } }, vendor.count, " tx \xB7 $", fmt$(vendor.total))), trayMinimized && vendor.category && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: getCatColor(vendor.category), fontWeight: 500 } }, vendor.category)))))), (() => {
+  }))), view === "vendors" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 14, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      className: `tab-btn ${vendorTab === "queue" ? "active" : ""}`,
+      onClick: () => {
+        setVendorTab("queue");
+        setVendorSearch("");
+      },
+      style: { display: "flex", alignItems: "center", gap: 5 }
+    },
+    "Queue",
+    allUncategorized.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { background: T.danger, color: "#fff", borderRadius: 6, padding: "0 5px", fontSize: 10 } }, allUncategorized.length),
+    allUncategorized.length === 0 && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4 } }, "0")
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      className: `tab-btn ${vendorTab === "list" ? "active" : ""}`,
+      onClick: () => {
+        setVendorTab("list");
+        setVendorSearch("");
+      },
+      style: { display: "flex", alignItems: "center", gap: 5 }
+    },
+    "All ",
+    /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4 } }, vendors.length)
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      className: `tab-btn ${vendorTab === "sorted" ? "active" : ""}`,
+      onClick: () => {
+        setVendorTab("sorted");
+        setVendorSearch("");
+      },
+      style: { display: "flex", alignItems: "center", gap: 5 }
+    },
+    "Sorted",
+    categorizedVendors.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { background: `${T.accent}22`, color: T.accent, borderRadius: 6, padding: "0 5px", fontSize: 10 } }, categorizedVendors.length)
+  )), vendorTab === "queue" && (allUncategorized.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "40px 20px", textAlign: "center", color: T.text3, fontSize: 13 } }, "All vendors categorized") : /* @__PURE__ */ React.createElement("div", { style: { paddingBottom: trayMinimized ? 60 : 260 } }, /* @__PURE__ */ React.createElement("input", { placeholder: "Search vendors\u2026", value: vendorSearch, onChange: (e) => setVendorSearch(e.target.value), style: { width: "100%", marginBottom: 10 } }), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 10, overflow: "hidden", opacity: trayMinimized ? 1 : 0.45, pointerEvents: trayMinimized ? "auto" : "none" } }, queueVendors.slice(0, trayMinimized ? 50 : 8).map((vendor) => /* @__PURE__ */ React.createElement("div", { key: vendor.key, className: "vq-row" }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, vendor.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text4, marginTop: 1 } }, vendor.count, " tx \xB7 $", fmt$(vendor.total))), trayMinimized && vendor.category && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: getCatColor(vendor.category), fontWeight: 500 } }, vendor.category)))))), (() => {
     const hasCategories = categories.length > 0;
     const showTray = view === "vendors";
     if (!showTray) return null;
@@ -14184,7 +14233,11 @@ function ExpenseTracker() {
         "\xBD"
       ), /* @__PURE__ */ React.createElement("span", { onClick: () => toggleCard(src), style: { fontSize: 12, color: T.text4, marginLeft: 4, cursor: "pointer" } }, collapsed ? "\u25B8" : "\u25BE")), !collapsed && txs.map(renderTxRow));
     });
-  })())), view === "categories" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, marginBottom: 16, alignItems: "center" } }, /* @__PURE__ */ React.createElement("input", { placeholder: "New category name\u2026", value: newCat, onChange: (e) => setNewCat(e.target.value), onKeyDown: (e) => e.key === "Enter" && addCategory(), style: { flex: 1, maxWidth: 280 } }), /* @__PURE__ */ React.createElement("button", { className: "action-btn", onClick: addCategory }, "Add")), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 14, overflow: "hidden", boxShadow: T.shadow } }, categories.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: 32, textAlign: "center", color: T.text4, fontSize: 13 } }, "No categories yet."), [...categories].sort((a, b) => a.localeCompare(b)).map((cat, i, arr) => {
+  })())), view === "categories" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, marginBottom: 16, alignItems: "center" } }, /* @__PURE__ */ React.createElement("input", { placeholder: "New category name\u2026", value: newCat, onChange: (e) => setNewCat(e.target.value), onKeyDown: (e) => e.key === "Enter" && addCategory(), style: { flex: 1, maxWidth: 280 } }), /* @__PURE__ */ React.createElement("button", { className: "action-btn", onClick: addCategory }, "Add")), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 14, overflow: "hidden", boxShadow: T.shadow } }, categories.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: 32, textAlign: "center", color: T.text4, fontSize: 13 } }, "No categories yet."), [...categories].sort((a, b) => {
+    const totalA = rangeTxs.filter((t) => t.category === a).reduce((s, t) => s + t.amount, 0);
+    const totalB = rangeTxs.filter((t) => t.category === b).reduce((s, t) => s + t.amount, 0);
+    return totalB - totalA;
+  }).map((cat, i, arr) => {
     const color = getCatColor(cat);
     const catTxs = rangeTxs.filter((t) => t.category === cat);
     const fullTotal = catTxs.reduce((s, t) => s + t.amount, 0);
