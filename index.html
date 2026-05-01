@@ -14090,6 +14090,27 @@ function ExpenseTracker() {
     },
     "Delete ",
     selectedTxIds.size
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => {
+        setEditMode((m) => !m);
+        setSelectedTxIds(/* @__PURE__ */ new Set());
+      },
+      style: {
+        background: editMode ? T.accentBg : "none",
+        border: `1px solid ${editMode ? T.accent : T.border}`,
+        color: editMode ? T.accent : T.text3,
+        borderRadius: 6,
+        padding: "3px 10px",
+        fontSize: 11,
+        fontWeight: editMode ? 600 : 400,
+        fontFamily: "inherit",
+        cursor: "pointer",
+        flexShrink: 0
+      }
+    },
+    editMode ? "Done" : "Edit"
   ), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }), [["date", "Date"], ["vendor", "Vendor"], ["amount", "Amt"], ["source", "Card"], ["category", "Cat"]].map(([key, label]) => {
     const active = txSort.by === key;
     return /* @__PURE__ */ React.createElement(
