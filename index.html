@@ -22,31 +22,10 @@
   <div id="root"></div>
   <script>window.onerror=function(msg,src,line,col,err){var b=document.getElementById('error-banner');b.style.display='block';b.textContent='Error: '+msg+' ('+line+':'+col+')\n'+(err&&err.stack?err.stack:'');return true;};</script>
   <script>(() => {
-  var __create = Object.create;
-  var __defProp = Object.defineProperty;
-  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
   var __getOwnPropNames = Object.getOwnPropertyNames;
-  var __getProtoOf = Object.getPrototypeOf;
-  var __hasOwnProp = Object.prototype.hasOwnProperty;
   var __commonJS = (cb, mod) => function __require() {
     return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
   };
-  var __copyProps = (to, from, except, desc) => {
-    if (from && typeof from === "object" || typeof from === "function") {
-      for (let key of __getOwnPropNames(from))
-        if (!__hasOwnProp.call(to, key) && key !== except)
-          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-    }
-    return to;
-  };
-  var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-    // If the importer is in node compatibility mode or this is not an ESM
-    // file that has been converted to a CommonJS file using a Babel-
-    // compatible transform (i.e. "__esModule" has not been set), then set
-    // "default" to the CommonJS "module.exports" for node compatibility.
-    isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-    mod
-  ));
 
   // home/claude/.npm-global/lib/node_modules/react/cjs/react.production.js
   var require_react_production = __commonJS({
@@ -485,7 +464,7 @@
       exports.useTransition = function() {
         return ReactSharedInternals.H.useTransition();
       };
-      exports.version = "19.2.4";
+      exports.version = "19.2.5";
     }
   });
 
@@ -931,7 +910,7 @@
       exports.useFormStatus = function() {
         return ReactSharedInternals.H.useHostTransitionStatus();
       };
-      exports.version = "19.2.4";
+      exports.version = "19.2.5";
     }
   });
 
@@ -967,7 +946,7 @@
       "use strict";
       var Scheduler = require_scheduler();
       var React2 = require_react();
-      var ReactDOM = require_react_dom();
+      var ReactDOM2 = require_react_dom();
       function formatProdErrorMessage(code) {
         var url = "https://react.dev/errors/" + code;
         if (1 < arguments.length) {
@@ -1158,7 +1137,7 @@
       }
       var isArrayImpl = Array.isArray;
       var ReactSharedInternals = React2.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;
-      var ReactDOMSharedInternals = ReactDOM.__DOM_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;
+      var ReactDOMSharedInternals = ReactDOM2.__DOM_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;
       var sharedNotPendingObject = {
         pending: false,
         data: null,
@@ -12604,12 +12583,12 @@
         }
       };
       var isomorphicReactPackageVersion$jscomp$inline_1840 = React2.version;
-      if ("19.2.4" !== isomorphicReactPackageVersion$jscomp$inline_1840)
+      if ("19.2.5" !== isomorphicReactPackageVersion$jscomp$inline_1840)
         throw Error(
           formatProdErrorMessage(
             527,
             isomorphicReactPackageVersion$jscomp$inline_1840,
-            "19.2.4"
+            "19.2.5"
           )
         );
       ReactDOMSharedInternals.findDOMNode = function(componentOrElement) {
@@ -12627,10 +12606,10 @@
       };
       var internals$jscomp$inline_2347 = {
         bundleType: 0,
-        version: "19.2.4",
+        version: "19.2.5",
         rendererPackageName: "react-dom",
         currentDispatcherRef: ReactSharedInternals,
-        reconcilerVersion: "19.2.4"
+        reconcilerVersion: "19.2.5"
       };
       if ("undefined" !== typeof __REACT_DEVTOOLS_GLOBAL_HOOK__) {
         hook$jscomp$inline_2348 = __REACT_DEVTOOLS_GLOBAL_HOOK__;
@@ -12698,7 +12677,7 @@
         listenToAllSupportedEvents(container);
         return new ReactDOMHydrationRoot(initialChildren);
       };
-      exports.version = "19.2.4";
+      exports.version = "19.2.5";
     }
   });
 
@@ -12728,11 +12707,11 @@
     }
   });
 
-  // tmp/react-global.js
-  var React = __toESM(require_react());
-  var ReactDOMClient = __toESM(require_client());
+  // tmp/react-entry.js
+  var React = require_react();
+  var ReactDOM = require_client();
   window.React = React;
-  window.ReactDOM = { createRoot: ReactDOMClient.createRoot };
+  window.ReactDOM = ReactDOM;
 })();
 /*! Bundled license information:
 
@@ -13417,6 +13396,7 @@ function ExpenseTracker() {
   const [editMode, setEditMode] = useState(false);
   const [txSort, setTxSort] = useState({ by: "date", dir: "desc" });
   const [collapsedCards, setCollapsedCards] = useState(/* @__PURE__ */ new Set());
+  const [trayMinimized, setTrayMinimized] = useState(false);
   const [monthOffset, setMonthOffset] = useState(0);
   const fileRef = useRef();
   useEffect(() => {
@@ -13431,12 +13411,9 @@ function ExpenseTracker() {
   }, [vendorMap]);
   useEffect(() => {
     setTransactions((prev) => {
-      const needsUpdate = prev.some((t) => t.imported && !t.source);
+      const needsUpdate = prev.some((t) => !t.source);
       if (!needsUpdate) return prev;
-      return prev.map((t) => {
-        if (t.imported && !t.source) return { ...t, source: "Wells Fargo" };
-        return t;
-      });
+      return prev.map((t) => t.source ? t : { ...t, source: "Wells Fargo" });
     });
   }, []);
   const getCatColor = (cat) => catColors[cat] || COLORS[categories.indexOf(cat) % COLORS.length] || T.text3;
@@ -13724,61 +13701,92 @@ function ExpenseTracker() {
     setView("vendors");
     setVendorTab("queue");
   };
-  return /* @__PURE__ */ React.createElement("div", { style: { minHeight: "100vh", background: T.bg, color: T.text, fontFamily: "-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif", display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement("style", null, `
+  return /* @__PURE__ */ React.createElement("div", { style: { minHeight: "100vh", background: T.bg, color: T.text, fontFamily: "'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif", display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement("style", null, `
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         *{box-sizing:border-box;margin:0;padding:0;}
-        ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:#C7C7CC;border-radius:2px;}
-        input,select{background:${T.bgCard};border:1px solid ${T.border};color:${T.text};padding:9px 13px;border-radius:10px;font-family:inherit;font-size:14px;outline:none;-webkit-appearance:none;}
-        input:focus{border-color:${T.accent};box-shadow:0 0 0 3px ${T.accentBg};}
+        ::-webkit-scrollbar{width:3px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:#D1D1D6;border-radius:2px;}
+        input,select{background:${T.bgCard};border:1px solid ${T.border};color:${T.text};padding:7px 11px;border-radius:8px;font-family:inherit;font-size:13px;outline:none;-webkit-appearance:none;}
+        input:focus{border-color:${T.accent};box-shadow:0 0 0 2px ${T.accentBg};}
         button{cursor:pointer;font-family:inherit;}
-        .nav-btn{background:none;border:none;color:${T.text3};font-size:13px;padding:8px 14px;border-radius:8px;transition:all .18s;font-weight:500;}
-        .nav-btn:hover{color:${T.text};background:${T.border};}
+        .nav-btn{background:none;border:none;color:${T.text3};font-size:13px;padding:6px 12px;border-radius:7px;transition:all .15s;font-weight:500;}
         .nav-btn.active{color:${T.accent};background:${T.accentBg};}
-        .action-btn{background:${T.accent};color:#fff;border:none;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:600;transition:opacity .18s;}
+        .action-btn{background:${T.accent};color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;transition:opacity .15s;}
         .action-btn:hover{opacity:.88;}
-        .ghost-btn{background:${T.bgCard};border:1px solid ${T.border};color:${T.text2};padding:9px 18px;border-radius:10px;font-size:13px;font-weight:500;transition:all .18s;box-shadow:${T.shadowSm};}
-        .ghost-btn:hover{border-color:${T.border2};}
-        .danger-btn-sm{background:none;border:none;color:${T.danger};font-size:16px;padding:4px 8px;border-radius:6px;line-height:1;transition:background .15s;font-weight:600;}
-        .danger-btn-sm:hover{background:${T.dangerBg};}
-        .card{background:${T.bgCard};border:1px solid ${T.border};border-radius:14px;padding:18px;box-shadow:${T.shadow};}
-        .tx-row-inner{padding:12px 16px;border-bottom:1px solid ${T.border};transition:background .12s;background:${T.bgCard};}
+        .ghost-btn{background:${T.bgCard};border:1px solid ${T.border};color:${T.text2};padding:7px 14px;border-radius:8px;font-size:13px;font-weight:500;transition:all .15s;}
+        .danger-btn-sm{background:none;border:none;color:${T.danger};font-size:15px;padding:3px 6px;border-radius:6px;line-height:1;font-weight:600;}
+        .card{background:${T.bgCard};border-radius:12px;padding:16px;}
+        .tx-row-inner{padding:10px 14px;border-bottom:1px solid ${T.border};transition:background .1s;background:${T.bgCard};}
         .tx-row-inner:last-child{border-bottom:none;}
-        .vq-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:14px;padding:13px 18px;border-bottom:1px solid ${T.border};transition:background .12s;background:${T.bgCard};}
+        .vq-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid ${T.border};background:${T.bgCard};}
         .vq-row:last-child{border-bottom:none;}
-        .sv-row{display:grid;grid-template-columns:10px 1fr auto auto auto;align-items:flex-start;gap:12px;padding:11px 16px;border-radius:10px;border:1px solid ${T.border};margin-bottom:6px;background:${T.bgCard};box-shadow:${T.shadowSm};}
-        .sv-row:hover{background:${T.bg};}
-        .tab-btn{background:none;border:none;color:${T.text3};font-size:13px;padding:7px 16px;border-radius:8px;transition:all .18s;font-weight:500;}
-        .tab-btn:hover{color:${T.text};background:${T.border};}
-        .tab-btn.active{background:${T.bgCard};color:${T.text};box-shadow:${T.shadowSm};}
-        .cat-pill-btn{border-radius:16px;padding:5px 11px;font-size:11px;font-family:inherit;cursor:pointer;font-weight:600;transition:all .15s;border:none;}
-        .vendor-row{display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid ${T.border};cursor:pointer;transition:background .12s;background:${T.bgCard};}
+        .tab-btn{background:none;border:none;color:${T.text3};font-size:12px;padding:6px 12px;border-radius:7px;transition:all .15s;font-weight:500;}
+        .tab-btn.active{background:${T.bgCard};color:${T.text};font-weight:600;}
+        .cat-pill-btn{border-radius:14px;padding:6px 12px;font-size:12px;font-family:inherit;cursor:pointer;font-weight:500;transition:all .15s;border:1px solid transparent;}
+        .vendor-row{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid ${T.border};cursor:pointer;transition:background .1s;background:${T.bgCard};}
         .vendor-row:last-child{border-bottom:none;}
-        .vendor-row:hover{background:${T.bg};}
-        .stat-chip{background:${T.bgCard};border:1px solid ${T.border};border-radius:12px;padding:14px 16px;box-shadow:${T.shadowSm};}
-        .stat-chip.clickable{cursor:pointer;transition:all .18s;}
-        .stat-chip.clickable:hover{border-color:${T.accent}55;background:${T.accentBg};}
-        @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
-        @keyframes modalIn{from{opacity:0;transform:scale(.95);}to{opacity:1;transform:scale(1);}}
-        @keyframes slideUp{from{opacity:0;transform:translateY(40px);}to{opacity:1;transform:translateY(0);}}
-      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "14px 24px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 20, fontWeight: 700, letterSpacing: "-.4px" } }, "Ledger"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 2, flexWrap: "wrap" } }, ["dashboard", "categories", "transactions", "vendors"].map((v) => /* @__PURE__ */ React.createElement("button", { key: v, className: `nav-btn ${view === v ? "active" : ""}`, onClick: () => setView(v), style: { textTransform: "capitalize" } }, v)))), /* @__PURE__ */ React.createElement("div", { style: { padding: "0 24px 12px", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", borderTop: `1px solid ${T.border}` } }, [["week", "Week"], ["month", "Month"], ["ytd", "YTD"], ["all", "All Time"], ["custom", "Custom"]].map(([p, label]) => /* @__PURE__ */ React.createElement("button", { key: p, onClick: () => {
-    setPeriod(p);
-    if (p === "month") setMonthOffset(0);
-  }, style: {
-    background: period === p ? T.accent : "none",
-    border: `1px solid ${period === p ? T.accent : T.border}`,
-    color: period === p ? "#fff" : T.text3,
-    padding: "5px 13px",
+        .stat-chip{background:${T.bgCard};border-radius:10px;padding:12px 14px;}
+        .stat-chip.clickable{cursor:pointer;transition:all .15s;}
+        @keyframes toastIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+        @keyframes modalIn{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
+        @keyframes slideUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
+        @keyframes dropIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 16px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 18, fontWeight: 700, letterSpacing: "-.3px", flexShrink: 0 } }, "Ledger"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 1 } }, ["dashboard", "categories", "transactions", "vendors"].map((v) => /* @__PURE__ */ React.createElement("button", { key: v, className: `nav-btn ${view === v ? "active" : ""}`, onClick: () => setView(v), style: { textTransform: "capitalize" } }, v))), /* @__PURE__ */ React.createElement("div", { style: { position: "relative", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setShowPeriodPicker((p) => !p), style: {
+    display: "flex",
+    alignItems: "center",
+    gap: 5,
+    background: T.bg,
+    border: `1px solid ${T.border}`,
     borderRadius: 20,
+    padding: "5px 12px",
     fontSize: 12,
+    fontWeight: 600,
+    color: T.text,
     fontFamily: "inherit",
-    fontWeight: 500,
-    cursor: "pointer",
-    transition: "all .18s"
-  } }, label)), period === "month" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, background: T.border, borderRadius: 20, padding: "2px 4px" } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setMonthOffset((o) => o - 1), style: { background: "none", border: "none", color: T.text2, fontSize: 16, cursor: "pointer", padding: "0 6px", lineHeight: 1 } }, "\u2039"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 600, color: T.text, minWidth: 80, textAlign: "center" } }, fmtMonth(curMonthDate)), /* @__PURE__ */ React.createElement("button", { onClick: () => setMonthOffset((o) => Math.min(o + 1, 0)), style: { background: "none", border: "none", color: monthOffset < 0 ? T.text2 : T.text4, fontSize: 16, cursor: monthOffset < 0 ? "pointer" : "default", padding: "0 6px", lineHeight: 1 } }, "\u203A")), period === "custom" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("input", { type: "date", value: customStart, onChange: (e) => setCustomStart(e.target.value), style: { fontSize: 12, padding: "5px 10px", width: 138, borderRadius: 8 } }), /* @__PURE__ */ React.createElement("span", { style: { color: T.text3, fontSize: 12 } }, "to"), /* @__PURE__ */ React.createElement("input", { type: "date", value: customEnd, onChange: (e) => setCustomEnd(e.target.value), style: { fontSize: 12, padding: "5px 10px", width: 138, borderRadius: 8 } })), /* @__PURE__ */ React.createElement("div", { style: { marginLeft: "auto", fontSize: 12, color: T.text3, fontWeight: 500 } }, period !== "month" && periodLabel(), prevRange && /* @__PURE__ */ React.createElement("span", { style: { color: T.text4, marginLeft: 8 } }, "vs ", prevLabel())))), /* @__PURE__ */ React.createElement("div", { style: { background: T.accent, position: "sticky", top: 0, zIndex: 89, padding: "8px 20px", display: "flex", alignItems: "center", gap: 0, overflowX: "auto", WebkitOverflowScrolling: "touch" } }, /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0, paddingRight: 16, borderRight: `1px solid rgba(255,255,255,.25)` } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: "rgba(255,255,255,.75)", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em" } }, "My Expenses"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 18, fontWeight: 700, color: "#fff" } }, "$", fmt$(myTotal))), allSources.map((src) => {
+    cursor: "pointer"
+  } }, period === "month" ? fmtMonth(curMonthDate) : period === "week" ? "Week" : period === "ytd" ? "YTD" : period === "all" ? "All Time" : "Custom", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, color: T.text4 } }, "\u25BE")), showPeriodPicker && /* @__PURE__ */ React.createElement("div", { style: {
+    position: "absolute",
+    right: 0,
+    top: "calc(100% + 6px)",
+    background: T.bgCard,
+    border: `1px solid ${T.border}`,
+    borderRadius: 14,
+    boxShadow: "0 8px 30px rgba(0,0,0,.12)",
+    zIndex: 200,
+    minWidth: 160,
+    overflow: "hidden",
+    animation: "dropIn .15s ease"
+  } }, [["ytd", "YTD"], ["month", "Month"], ["week", "Week"], ["all", "All Time"], ["custom", "Custom"]].map(([p, label]) => /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      key: p,
+      onClick: () => {
+        setPeriod(p);
+        if (p === "month") setMonthOffset(0);
+        setShowPeriodPicker(false);
+      },
+      style: {
+        display: "block",
+        width: "100%",
+        textAlign: "left",
+        padding: "11px 16px",
+        fontSize: 13,
+        fontWeight: period === p ? 600 : 400,
+        color: period === p ? T.accent : T.text,
+        background: period === p ? T.accentBg : "none",
+        border: "none",
+        borderBottom: `1px solid ${T.border}`,
+        fontFamily: "inherit",
+        cursor: "pointer",
+        transition: "background .1s"
+      }
+    },
+    label
+  ))))), period === "month" && /* @__PURE__ */ React.createElement("div", { style: { padding: "0 16px 10px", display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setMonthOffset((o) => o - 1), style: { background: "none", border: "none", color: T.text3, fontSize: 16, cursor: "pointer", padding: "0 4px" } }, "\u2039"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 600, color: T.text } }, fmtMonth(curMonthDate)), /* @__PURE__ */ React.createElement("button", { onClick: () => setMonthOffset((o) => Math.min(o + 1, 0)), style: { background: "none", border: "none", color: monthOffset < 0 ? T.text3 : T.text4, fontSize: 16, cursor: monthOffset < 0 ? "pointer" : "default", padding: "0 4px" } }, "\u203A")), period === "custom" && /* @__PURE__ */ React.createElement("div", { style: { padding: "0 16px 10px", display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("input", { type: "date", value: customStart, onChange: (e) => setCustomStart(e.target.value), style: { fontSize: 12, padding: "5px 10px", width: 130, borderRadius: 8 } }), /* @__PURE__ */ React.createElement("span", { style: { color: T.text3, fontSize: 12 } }, "\u2192"), /* @__PURE__ */ React.createElement("input", { type: "date", value: customEnd, onChange: (e) => setCustomEnd(e.target.value), style: { fontSize: 12, padding: "5px 10px", width: 130, borderRadius: 8 } }))), /* @__PURE__ */ React.createElement("div", { style: { background: "#1C1C1E", position: "sticky", top: 0, zIndex: 89, padding: "8px 16px", display: "flex", alignItems: "center", gap: 0, overflowX: "auto", WebkitOverflowScrolling: "touch", width: "100%" } }, /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0, paddingRight: 14, borderRight: "1px solid rgba(255,255,255,.15)", marginRight: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: "rgba(255,255,255,.5)", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".08em" } }, "My Total"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, color: "#fff", letterSpacing: "-.3px" } }, "$", fmt$(myTotal))), allSources.map((src) => {
     const srcMy = personalTxs.filter((t) => t.source === src && t.category !== BUSINESS_CAT).reduce((s, t) => s + t.amount, 0) + sharedTxs.filter((t) => t.source === src).reduce((s, t) => s + t.amount, 0) * 0.5;
     if (srcMy === 0) return null;
     const shortSrc = src.includes("\xB7\xB7\xB7") ? `\xB7\xB7\xB7${src.split("\xB7\xB7\xB7")[1]}` : src.split(" ")[0];
-    return /* @__PURE__ */ React.createElement("div", { key: src, style: { flexShrink: 0, paddingLeft: 14, paddingRight: 14, borderRight: `1px solid rgba(255,255,255,.25)` } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: "rgba(255,255,255,.7)", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".06em", whiteSpace: "nowrap" } }, shortSrc), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, fontWeight: 700, color: "#fff" } }, "$", fmt$(srcMy)));
-  }).filter(Boolean), businessTotal > 0 && /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0, paddingLeft: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: "rgba(255,255,255,.7)", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".06em" } }, "Cuban Palms"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, fontWeight: 700, color: "rgba(255,255,255,.85)" } }, "$", fmt$(businessTotal)))), /* @__PURE__ */ React.createElement(TabSwipe, { view, setView }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, padding: "18px 24px", width: "100%", maxWidth: view === "vendors" ? 820 : 1080 } }, view === "dashboard" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, border: `2px solid ${T.accent}`, borderRadius: 16, padding: "18px 20px", marginBottom: 12, boxShadow: T.shadow } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.accent, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 6 } }, "My Expenses"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 32, fontWeight: 700, color: T.accent, marginBottom: 4 } }, "$", fmt$(myTotal)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: T.text3, marginBottom: 12 } }, "Personal $", fmt$(personalTotal), sharedMyTotal > 0 && /* @__PURE__ */ React.createElement("span", { style: { marginLeft: 10 } }, "+ 50% Shared $", fmt$(sharedMyTotal)), prevMyTotal > 0 && /* @__PURE__ */ React.createElement("span", { style: { marginLeft: 10, color: T.text4 } }, "vs $", fmt$(prevMyTotal), " prev")), allSources.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { borderTop: `1px solid ${T.border}`, paddingTop: 12, display: "flex", flexDirection: "column", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, fontWeight: 700, color: T.text4, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 2 } }, "By Card"), allSources.map((src) => {
+    return /* @__PURE__ */ React.createElement("div", { key: src, style: { flexShrink: 0, paddingRight: 14, borderRight: "1px solid rgba(255,255,255,.15)", marginRight: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: "rgba(255,255,255,.45)", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".06em", whiteSpace: "nowrap" } }, shortSrc), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,.9)" } }, "$", fmt$(srcMy)));
+  }).filter(Boolean), businessTotal > 0 && /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: "rgba(255,255,255,.45)", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".06em" } }, "Cuban Palms"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,.7)" } }, "$", fmt$(businessTotal)))), /* @__PURE__ */ React.createElement(TabSwipe, { view, setView }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, padding: "18px 24px", width: "100%", maxWidth: view === "vendors" ? 820 : 1080 } }, view === "dashboard" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, border: `2px solid ${T.accent}`, borderRadius: 16, padding: "18px 20px", marginBottom: 12, boxShadow: T.shadow } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.accent, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 6 } }, "My Expenses"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 32, fontWeight: 700, color: T.accent, marginBottom: 4 } }, "$", fmt$(myTotal)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: T.text3, marginBottom: 12 } }, "Personal $", fmt$(personalTotal), sharedMyTotal > 0 && /* @__PURE__ */ React.createElement("span", { style: { marginLeft: 10 } }, "+ 50% Shared $", fmt$(sharedMyTotal)), prevMyTotal > 0 && /* @__PURE__ */ React.createElement("span", { style: { marginLeft: 10, color: T.text4 } }, "vs $", fmt$(prevMyTotal), " prev")), allSources.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { borderTop: `1px solid ${T.border}`, paddingTop: 12, display: "flex", flexDirection: "column", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, fontWeight: 700, color: T.text4, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 2 } }, "By Card"), allSources.map((src) => {
     const srcPersonal = personalTxs.filter((t) => t.source === src).reduce((s, t) => s + t.amount, 0);
     const srcSharedFull = sharedTxs.filter((t) => t.source === src).reduce((s, t) => s + t.amount, 0);
     const srcSharedMy = srcSharedFull * 0.5;
@@ -13835,16 +13843,16 @@ function ExpenseTracker() {
       padding: "12px 0",
       borderBottom: i < importLog.length - 1 ? `1px solid ${T.border}` : "none"
     } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: T.text } }, dateStr), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text4, marginTop: 1 } }, timeStr)), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: T.accent } }, entry.imported, " imported"), entry.skipped > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text3, marginTop: 1 } }, entry.skipped, " duplicate", entry.skipped !== 1 ? "s" : "", " skipped"))), entry.files && entry.files.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 5 } }, entry.files.map((f) => /* @__PURE__ */ React.createElement("span", { key: f, style: { fontSize: 11, color: T.text3, background: T.bg, border: `1px solid ${T.border}`, borderRadius: 8, padding: "2px 8px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 200 } }, "\u{1F4C4} ", f))));
-  }))), view === "vendors" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginBottom: 18 } }, /* @__PURE__ */ React.createElement("div", { className: "stat-chip", style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text3, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 4 } }, "Transactions"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 22, fontWeight: 700, color: T.text } }, rangeTxs.length)), /* @__PURE__ */ React.createElement("div", { className: "stat-chip clickable", onClick: goVendors, style: { textAlign: "center", borderColor: curUncat > 0 ? `${T.danger}44` : T.border } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text3, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 4 } }, "Uncategorized"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 22, fontWeight: 700, color: curUncat > 0 ? T.danger : T.text } }, curUncat)), /* @__PURE__ */ React.createElement("div", { className: "stat-chip", style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text3, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 4 } }, "Total Vendors"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 22, fontWeight: 700, color: T.text } }, vendors.length))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, gap: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: T.text3, fontWeight: 500 } }, vendorTab === "queue" ? `${allUncategorized.length} pending` : `${categorizedVendors.length} categorized`), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 4, background: T.border, borderRadius: 10, padding: 3 } }, /* @__PURE__ */ React.createElement("button", { className: `tab-btn ${vendorTab === "queue" ? "active" : ""}`, onClick: () => {
+  }))), view === "vendors" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 12, marginBottom: 16, alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: T.text3 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600, color: curUncat > 0 ? T.danger : T.text } }, curUncat), " uncategorized"), /* @__PURE__ */ React.createElement("span", { style: { color: T.border } }, "\xB7"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: T.text3 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600, color: T.text } }, categorizedVendors.length), " sorted"), /* @__PURE__ */ React.createElement("span", { style: { color: T.border } }, "\xB7"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: T.text3 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600, color: T.text } }, vendors.length), " vendors")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 2, background: T.border, borderRadius: 9, padding: 2, marginBottom: 14, width: "fit-content" } }, /* @__PURE__ */ React.createElement("button", { className: `tab-btn ${vendorTab === "queue" ? "active" : ""}`, onClick: () => {
     setVendorTab("queue");
     setVendorSearch("");
-  } }, "Queue ", allUncategorized.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { background: T.danger, color: "#fff", borderRadius: 8, padding: "1px 6px", fontSize: 10, marginLeft: 4 } }, allUncategorized.length)), /* @__PURE__ */ React.createElement("button", { className: `tab-btn ${vendorTab === "list" ? "active" : ""}`, onClick: () => {
+  } }, "Queue", allUncategorized.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { background: T.danger, color: "#fff", borderRadius: 6, padding: "0 5px", fontSize: 10, marginLeft: 4 } }, allUncategorized.length)), /* @__PURE__ */ React.createElement("button", { className: `tab-btn ${vendorTab === "list" ? "active" : ""}`, onClick: () => {
     setVendorTab("list");
     setVendorSearch("");
-  } }, "All Vendors"), /* @__PURE__ */ React.createElement("button", { className: `tab-btn ${vendorTab === "sorted" ? "active" : ""}`, onClick: () => {
+  } }, "All"), /* @__PURE__ */ React.createElement("button", { className: `tab-btn ${vendorTab === "sorted" ? "active" : ""}`, onClick: () => {
     setVendorTab("sorted");
     setVendorSearch("");
-  } }, "Sorted ", categorizedVendors.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { background: `${T.accent}22`, color: T.accent, borderRadius: 8, padding: "1px 6px", fontSize: 10, marginLeft: 4 } }, categorizedVendors.length)))), vendorTab === "queue" && (allUncategorized.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 20px", background: T.bgCard, borderRadius: 16, border: `1px solid ${T.border}`, boxShadow: T.shadow } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 600, marginBottom: 6, color: T.text } }, "All vendors sorted"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: T.text3, marginBottom: 20 } }, "Switch to Sorted to review."), /* @__PURE__ */ React.createElement("button", { className: "ghost-btn", onClick: () => setVendorTab("sorted") }, "View Sorted")) : /* @__PURE__ */ React.createElement("div", { style: { paddingBottom: 260 } }, /* @__PURE__ */ React.createElement("input", { placeholder: "Search vendors\u2026", value: vendorSearch, onChange: (e) => setVendorSearch(e.target.value), style: { width: "100%", marginBottom: 10 } }), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text4, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 8, paddingLeft: 2, fontWeight: 600 } }, "Queue (", allUncategorized.length, ")"), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden", boxShadow: T.shadowSm, opacity: 0.45, pointerEvents: "none" } }, queueVendors.slice(0, 8).map((vendor) => /* @__PURE__ */ React.createElement("div", { key: vendor.key, className: "vq-row" }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, color: T.text2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, vendor.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text4, marginTop: 2 } }, vendor.count, " tx \xB7 $", fmt$(vendor.total)))))))), (() => {
+  } }, "Sorted", categorizedVendors.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { background: `${T.accent}22`, color: T.accent, borderRadius: 6, padding: "0 5px", fontSize: 10, marginLeft: 4 } }, categorizedVendors.length))), vendorTab === "queue" && (allUncategorized.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "40px 20px", textAlign: "center", color: T.text3, fontSize: 13 } }, "All vendors categorized") : /* @__PURE__ */ React.createElement("div", { style: { paddingBottom: trayMinimized ? 60 : 260 } }, /* @__PURE__ */ React.createElement("input", { placeholder: "Search vendors\u2026", value: vendorSearch, onChange: (e) => setVendorSearch(e.target.value), style: { width: "100%", marginBottom: 10 } }), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 10, overflow: "hidden", opacity: trayMinimized ? 1 : 0.45, pointerEvents: trayMinimized ? "auto" : "none" } }, queueVendors.slice(0, trayMinimized ? 50 : 8).map((vendor) => /* @__PURE__ */ React.createElement("div", { key: vendor.key, className: "vq-row" }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, vendor.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text4, marginTop: 1 } }, vendor.count, " tx \xB7 $", fmt$(vendor.total))), trayMinimized && vendor.category && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: getCatColor(vendor.category), fontWeight: 500 } }, vendor.category)))))), (() => {
     const hasCategories = categories.length > 0;
     const showTray = view === "vendors";
     if (!showTray) return null;
@@ -13855,19 +13863,27 @@ function ExpenseTracker() {
       right: 0,
       background: "rgba(255,255,255,.98)",
       borderTop: `1px solid ${T.border}`,
-      padding: "14px 16px 32px",
+      padding: trayMinimized ? "8px 16px" : `14px 16px 32px`,
       zIndex: 100,
       backdropFilter: "blur(24px)",
       WebkitBackdropFilter: "blur(24px)",
-      boxShadow: "0 -8px 32px rgba(0,0,0,.10)"
-    } }, vendorTab === "queue" && currentVendor && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.text4, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 4 } }, allSkipped ? "Cycling \u2014 all skipped" : "Assign category to"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 22, fontWeight: 700, color: T.text, lineHeight: 1.2, marginBottom: 4 } }, currentVendor.name), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", alignItems: "center", gap: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: T.text3 } }, "$", fmt$(currentVendor.total), " \xB7 ", currentVendor.count, " tx"), /* @__PURE__ */ React.createElement(
+      boxShadow: "0 -4px 20px rgba(0,0,0,.08)",
+      transition: "padding .2s"
+    } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: trayMinimized ? 0 : 10 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, vendorTab === "queue" && currentVendor && !trayMinimized && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, fontWeight: 600, color: T.text } }, currentVendor.name), trayMinimized && vendorTab === "queue" && currentVendor && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: T.text3 } }, "Tap \u2191 to assign ", /* @__PURE__ */ React.createElement("strong", null, currentVendor.name))), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => setTrayMinimized((m) => !m),
+        style: { background: T.bg, border: `1px solid ${T.border}`, color: T.text3, borderRadius: 20, padding: "3px 12px", fontSize: 12, fontWeight: 500, fontFamily: "inherit", cursor: "pointer" }
+      },
+      trayMinimized ? "\u2191 Assign" : "\u2193 Minimize"
+    )), !trayMinimized && /* @__PURE__ */ React.createElement(React.Fragment, null, vendorTab === "queue" && currentVendor && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 20, fontWeight: 700, color: T.text, lineHeight: 1.2, marginBottom: 3 } }, currentVendor.name), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: T.text3 } }, "$", fmt$(currentVendor.total), " \xB7 ", currentVendor.count, " tx"), /* @__PURE__ */ React.createElement(
       "button",
       {
         onClick: () => skipVendor(currentVendor.key),
-        style: { background: "none", border: `1px solid ${T.border}`, color: T.text3, borderRadius: 8, padding: "3px 10px", fontSize: 11, fontWeight: 500, fontFamily: "inherit", cursor: "pointer" }
+        style: { background: "none", border: `1px solid ${T.border}`, color: T.text3, borderRadius: 7, padding: "2px 9px", fontSize: 11, fontWeight: 500, fontFamily: "inherit", cursor: "pointer" }
       },
-      "Skip \u2192"
-    ))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 7, justifyContent: "center", maxWidth: 700, margin: "0 auto 10px" } }, [...categories].sort((a, b) => a.localeCompare(b)).map((cat) => {
+      "Skip"
+    ))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center", maxWidth: 700, margin: "0 auto 8px" } }, [...categories].sort((a, b) => a.localeCompare(b)).map((cat) => {
       const color = getCatColor(cat);
       const isActive = vendorTab === "queue" && currentVendor;
       return /* @__PURE__ */ React.createElement(
@@ -13879,10 +13895,10 @@ function ExpenseTracker() {
             if (vendorTab === "queue" && currentVendor) assignVendor(currentVendor.key, cat);
           },
           style: {
-            background: `${color}15`,
-            border: `1.5px solid ${color}${isActive ? "66" : "33"}`,
-            color,
-            padding: "7px 13px",
+            background: T.bg,
+            border: `1px solid ${T.border}`,
+            color: T.text2,
+            padding: "6px 12px",
             fontSize: 12,
             opacity: vendorTab === "queue" && !currentVendor ? 0.4 : 1,
             cursor: isActive ? "pointer" : "default"
@@ -13895,9 +13911,9 @@ function ExpenseTracker() {
             }
           },
           onMouseLeave: (e) => {
-            e.currentTarget.style.background = `${color}15`;
-            e.currentTarget.style.color = color;
-            e.currentTarget.style.borderColor = `${color}${isActive ? "66" : "33"}`;
+            e.currentTarget.style.background = T.bg;
+            e.currentTarget.style.color = T.text2;
+            e.currentTarget.style.borderColor = T.border;
           }
         },
         cat
@@ -13906,25 +13922,14 @@ function ExpenseTracker() {
       "button",
       {
         onClick: () => setShowAddCatInTray(true),
-        style: {
-          background: T.accent,
-          color: "#fff",
-          borderRadius: 16,
-          padding: "7px 13px",
-          fontSize: 12,
-          fontFamily: "inherit",
-          cursor: "pointer",
-          fontWeight: 600,
-          border: "none",
-          transition: "all .15s"
-        }
+        style: { background: T.accent, color: "#fff", borderRadius: 14, padding: "6px 12px", fontSize: 12, fontFamily: "inherit", cursor: "pointer", fontWeight: 500, border: "none" }
       },
       "+ Add"
-    ) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } }, /* @__PURE__ */ React.createElement(
+    ) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 5, alignItems: "center" } }, /* @__PURE__ */ React.createElement(
       "input",
       {
         autoFocus: true,
-        placeholder: "New category\u2026",
+        placeholder: "Category\u2026",
         value: newCat,
         onChange: (e) => setNewCat(e.target.value),
         onKeyDown: (e) => {
@@ -13937,7 +13942,7 @@ function ExpenseTracker() {
             setShowAddCatInTray(false);
           }
         },
-        style: { width: 150, fontSize: 13, padding: "6px 10px", borderRadius: 10 }
+        style: { width: 130, fontSize: 12, padding: "5px 9px", borderRadius: 8 }
       }
     ), /* @__PURE__ */ React.createElement(
       "button",
@@ -13946,7 +13951,7 @@ function ExpenseTracker() {
           addCategory();
           setShowAddCatInTray(false);
         },
-        style: { background: T.accent, color: "#fff", border: "none", borderRadius: 10, padding: "6px 12px", fontSize: 12, fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }
+        style: { background: T.accent, color: "#fff", border: "none", borderRadius: 8, padding: "5px 11px", fontSize: 12, fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }
       },
       "Add"
     ), /* @__PURE__ */ React.createElement(
@@ -13956,10 +13961,10 @@ function ExpenseTracker() {
           setNewCat("");
           setShowAddCatInTray(false);
         },
-        style: { background: "none", border: "none", color: T.text3, fontSize: 18, fontFamily: "inherit", cursor: "pointer", padding: "0 4px" }
+        style: { background: "none", border: "none", color: T.text3, fontSize: 16, fontFamily: "inherit", cursor: "pointer" }
       },
       "\xD7"
-    ))));
+    )))));
   })(), vendorTab === "list" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("input", { placeholder: "Search vendors\u2026", value: vendorSearch, onChange: (e) => setVendorSearch(e.target.value), style: { width: "100%", marginBottom: 12 } }), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 14, overflow: "hidden", boxShadow: T.shadow } }, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 80px 90px 24px", gap: 0, padding: "9px 16px", borderBottom: `1px solid ${T.border}`, background: T.bg } }, ["Vendor", "Txns", "Total", ""].map((h) => /* @__PURE__ */ React.createElement("div", { key: h, style: { fontSize: 10, color: T.text4, textTransform: "uppercase", letterSpacing: ".1em", fontWeight: 600 } }, h))), vendors.filter((v) => !vendorSearch || v.name.toLowerCase().includes(vendorSearch.toLowerCase())).map((v) => {
     const vendorShared = transactions.filter((t) => t.description.trim().toLowerCase() === v.key).every((t) => t.shared) && v.count > 0;
     return /* @__PURE__ */ React.createElement("div", { key: v.key, className: "vendor-row", style: { display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", borderBottom: `1px solid ${T.border}`, cursor: "pointer", background: T.bgCard }, onClick: () => setSelectedVendor(v) }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, v.name), v.category && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: getCatColor(v.category), fontWeight: 600 } }, v.category), !v.category && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4 } }, "Uncategorized")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: T.text3, textAlign: "right" } }, v.count), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 600, color: T.accent, textAlign: "right" } }, "$", fmt$(v.total)), /* @__PURE__ */ React.createElement(
@@ -14020,7 +14025,23 @@ function ExpenseTracker() {
       },
       "\xD7"
     ));
-  }))), recentlyAssigned && /* @__PURE__ */ React.createElement("div", { style: { position: "fixed", top: 100, right: 16, background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 14, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 8px 32px rgba(0,0,0,.14)", zIndex: 200, animation: "toastIn .22s ease both", fontSize: 13, color: T.text, maxWidth: 320 } }, /* @__PURE__ */ React.createElement("span", { style: { color: T.green, fontWeight: 700, fontSize: 16 } }, "\u2713"), /* @__PURE__ */ React.createElement("span", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, recentlyAssigned.name), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: getCatColor(recentlyAssigned.newCat), fontWeight: 600 } }, recentlyAssigned.newCat)), /* @__PURE__ */ React.createElement("button", { onClick: undoAssign, style: { background: T.bg, border: `1px solid ${T.border}`, color: T.text2, borderRadius: 8, padding: "3px 9px", fontSize: 12, fontFamily: "inherit", cursor: "pointer", fontWeight: 500, flexShrink: 0 } }, "Undo"))), view === "transactions" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap", alignItems: "center" } }, /* @__PURE__ */ React.createElement("input", { placeholder: "Search\u2026", value: filter.search, onChange: (e) => setFilter((f) => ({ ...f, search: e.target.value })), style: { flex: 1, minWidth: 140 } }), /* @__PURE__ */ React.createElement(PillSelect, { value: filter.category, options: categories, colorFn: getCatColor, onChange: (v) => setFilter((f) => ({ ...f, category: v })), placeholder: "All categories" }), allSources.length > 0 && /* @__PURE__ */ React.createElement(PillSelect, { value: filter.source, options: allSources, onChange: (v) => setFilter((f) => ({ ...f, source: v })), placeholder: "All sources" }), /* @__PURE__ */ React.createElement("button", { className: "action-btn", onClick: () => fileRef.current.click() }, "+ Import"), /* @__PURE__ */ React.createElement("button", { className: "ghost-btn", onClick: () => setAddingTx((a) => !a) }, "+ Add"), /* @__PURE__ */ React.createElement("button", { className: "ghost-btn", onClick: exportCSV }, "Export")), /* @__PURE__ */ React.createElement("input", { ref: fileRef, type: "file", accept: ".csv,.xlsx,.xls", multiple: true, style: { display: "none" }, onChange: (e) => handleFiles(e.target.files) }), addingTx && /* @__PURE__ */ React.createElement("div", { className: "card", style: { marginBottom: 14, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" } }, [{ label: "Date", key: "date", placeholder: "MM/DD/YYYY", width: 130 }, { label: "Description", key: "description", placeholder: "e.g. Whole Foods", flex: 1 }, { label: "Amount", key: "amount", placeholder: "0.00", type: "number", width: 100 }].map(({ label, key, placeholder, width, flex, type }) => /* @__PURE__ */ React.createElement("div", { key, style: { display: "flex", flexDirection: "column", gap: 4, flex, minWidth: flex ? 160 : void 0 } }, /* @__PURE__ */ React.createElement("label", { style: { fontSize: 11, color: T.text3, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".06em" } }, label), /* @__PURE__ */ React.createElement("input", { type: type || "text", placeholder, value: newTx[key], onChange: (e) => setNewTx((t) => ({ ...t, [key]: e.target.value })), style: { width } }))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, /* @__PURE__ */ React.createElement("label", { style: { fontSize: 11, color: T.text3, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".06em" } }, "Source"), /* @__PURE__ */ React.createElement("input", { placeholder: "e.g. Chase Sapphire", value: newTx.source, onChange: (e) => setNewTx((t) => ({ ...t, source: e.target.value })), style: { width: 160 }, list: "source-list" }), /* @__PURE__ */ React.createElement("datalist", { id: "source-list" }, allSources.map((s) => /* @__PURE__ */ React.createElement("option", { key: s, value: s })))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, /* @__PURE__ */ React.createElement("label", { style: { fontSize: 11, color: T.text3, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".06em" } }, "Category"), /* @__PURE__ */ React.createElement("select", { value: newTx.category, onChange: (e) => setNewTx((t) => ({ ...t, category: e.target.value })), style: { width: 140 } }, /* @__PURE__ */ React.createElement("option", { value: "" }, "Uncategorized"), categories.map((c) => /* @__PURE__ */ React.createElement("option", { key: c, value: c }, c)))), /* @__PURE__ */ React.createElement("button", { className: "action-btn", onClick: addTransaction }, "Save"), /* @__PURE__ */ React.createElement("button", { className: "ghost-btn", onClick: () => setAddingTx(false) }, "Cancel")), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 14, overflow: "hidden", boxShadow: T.shadow } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 14px", borderBottom: `1px solid ${T.border}`, background: T.bg } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: T.text3, flexShrink: 0 } }, filteredTx.length, " transaction", filteredTx.length !== 1 ? "s" : ""), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4, flexShrink: 0 } }, "Sort:"), [["date", "Date"], ["vendor", "Vendor"], ["amount", "Amount"], ["source", "Card"], ["category", "Category"]].map(([key, label]) => {
+  }))), recentlyAssigned && /* @__PURE__ */ React.createElement("div", { style: { position: "fixed", top: 100, right: 16, background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 14, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 8px 32px rgba(0,0,0,.14)", zIndex: 200, animation: "toastIn .22s ease both", fontSize: 13, color: T.text, maxWidth: 320 } }, /* @__PURE__ */ React.createElement("span", { style: { color: T.green, fontWeight: 700, fontSize: 16 } }, "\u2713"), /* @__PURE__ */ React.createElement("span", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 600, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, recentlyAssigned.name), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: getCatColor(recentlyAssigned.newCat), fontWeight: 600 } }, recentlyAssigned.newCat)), /* @__PURE__ */ React.createElement("button", { onClick: undoAssign, style: { background: T.bg, border: `1px solid ${T.border}`, color: T.text2, borderRadius: 8, padding: "3px 9px", fontSize: 12, fontFamily: "inherit", cursor: "pointer", fontWeight: 500, flexShrink: 0 } }, "Undo"))), view === "transactions" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 12, alignItems: "center" } }, /* @__PURE__ */ React.createElement("input", { placeholder: "Search\u2026", value: filter.search, onChange: (e) => setFilter((f) => ({ ...f, search: e.target.value })), style: { flex: 1, minWidth: 0 } }), /* @__PURE__ */ React.createElement("select", { value: filter.category, onChange: (e) => setFilter((f) => ({ ...f, category: e.target.value })), style: { width: 120, fontSize: 12 } }, /* @__PURE__ */ React.createElement("option", { value: "" }, "All categories"), [...categories].sort((a, b) => a.localeCompare(b)).map((c) => /* @__PURE__ */ React.createElement("option", { key: c, value: c }, c))), /* @__PURE__ */ React.createElement("select", { value: filter.source, onChange: (e) => setFilter((f) => ({ ...f, source: e.target.value })), style: { width: 90, fontSize: 12 } }, /* @__PURE__ */ React.createElement("option", { value: "" }, "All cards"), allSources.map((s) => /* @__PURE__ */ React.createElement("option", { key: s, value: s }, s.split(" ")[0])))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 12, alignItems: "center" } }, /* @__PURE__ */ React.createElement("button", { className: "action-btn", onClick: () => fileRef.current.click() }, "+ Import"), /* @__PURE__ */ React.createElement("button", { className: "ghost-btn", onClick: () => setAddingTx((a) => !a) }, "+ Add"), /* @__PURE__ */ React.createElement("button", { className: "ghost-btn", onClick: exportCSV }, "Export")), /* @__PURE__ */ React.createElement("input", { ref: fileRef, type: "file", accept: ".csv,.xlsx,.xls", multiple: true, style: { display: "none" }, onChange: (e) => handleFiles(e.target.files) }), addingTx && /* @__PURE__ */ React.createElement("div", { className: "card", style: { marginBottom: 14, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" } }, [{ label: "Date", key: "date", placeholder: "MM/DD/YYYY", width: 130 }, { label: "Description", key: "description", placeholder: "e.g. Whole Foods", flex: 1 }, { label: "Amount", key: "amount", placeholder: "0.00", type: "number", width: 100 }].map(({ label, key, placeholder, width, flex, type }) => /* @__PURE__ */ React.createElement("div", { key, style: { display: "flex", flexDirection: "column", gap: 4, flex, minWidth: flex ? 160 : void 0 } }, /* @__PURE__ */ React.createElement("label", { style: { fontSize: 11, color: T.text3, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".06em" } }, label), /* @__PURE__ */ React.createElement("input", { type: type || "text", placeholder, value: newTx[key], onChange: (e) => setNewTx((t) => ({ ...t, [key]: e.target.value })), style: { width } }))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, /* @__PURE__ */ React.createElement("label", { style: { fontSize: 11, color: T.text3, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".06em" } }, "Source"), /* @__PURE__ */ React.createElement("input", { placeholder: "e.g. Chase Sapphire", value: newTx.source, onChange: (e) => setNewTx((t) => ({ ...t, source: e.target.value })), style: { width: 160 }, list: "source-list" }), /* @__PURE__ */ React.createElement("datalist", { id: "source-list" }, allSources.map((s) => /* @__PURE__ */ React.createElement("option", { key: s, value: s })))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, /* @__PURE__ */ React.createElement("label", { style: { fontSize: 11, color: T.text3, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".06em" } }, "Category"), /* @__PURE__ */ React.createElement("select", { value: newTx.category, onChange: (e) => setNewTx((t) => ({ ...t, category: e.target.value })), style: { width: 140 } }, /* @__PURE__ */ React.createElement("option", { value: "" }, "Uncategorized"), categories.map((c) => /* @__PURE__ */ React.createElement("option", { key: c, value: c }, c)))), /* @__PURE__ */ React.createElement("button", { className: "action-btn", onClick: addTransaction }, "Save"), /* @__PURE__ */ React.createElement("button", { className: "ghost-btn", onClick: () => setAddingTx(false) }, "Cancel")), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px", borderBottom: `1px solid ${T.border}`, background: T.bg, display: "flex", alignItems: "center", gap: 6, flexWrap: "nowrap", overflowX: "auto" } }, /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "checkbox",
+      checked: selectedTxIds.size === filteredTx.length && filteredTx.length > 0,
+      onChange: () => selectedTxIds.size === filteredTx.length ? setSelectedTxIds(/* @__PURE__ */ new Set()) : selectAllVisible(),
+      style: { width: 14, height: 14, cursor: "pointer", accentColor: T.accent, flexShrink: 0 }
+    }
+  ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text3, whiteSpace: "nowrap", flexShrink: 0 } }, filteredTx.length, " tx"), selectedTxIds.size > 0 && /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: deleteSelectedTx,
+      style: { background: T.danger, color: "#fff", border: "none", borderRadius: 6, padding: "3px 10px", fontSize: 11, fontWeight: 600, fontFamily: "inherit", cursor: "pointer", flexShrink: 0 }
+    },
+    "Delete ",
+    selectedTxIds.size
+  ), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }), [["date", "Date"], ["vendor", "Vendor"], ["amount", "Amt"], ["source", "Card"], ["category", "Cat"]].map(([key, label]) => {
     const active = txSort.by === key;
     return /* @__PURE__ */ React.createElement(
       "button",
@@ -14029,8 +14050,8 @@ function ExpenseTracker() {
         onClick: () => setTxSort((s) => ({ by: key, dir: s.by === key && s.dir === "desc" ? "asc" : "desc" })),
         style: {
           fontSize: 11,
-          padding: "3px 8px",
-          borderRadius: 10,
+          padding: "3px 7px",
+          borderRadius: 8,
           border: `1px solid ${active ? T.accent : T.border}`,
           background: active ? T.accentBg : "none",
           color: active ? T.accent : T.text3,
@@ -14042,46 +14063,9 @@ function ExpenseTracker() {
         }
       },
       label,
-      active ? txSort.dir === "desc" ? " \u2193" : " \u2191" : ""
+      active ? txSort.dir === "desc" ? "\u2193" : "\u2191" : ""
     );
-  })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement(
-    "input",
-    {
-      type: "checkbox",
-      checked: selectedTxIds.size === filteredTx.length && filteredTx.length > 0,
-      onChange: () => selectedTxIds.size === filteredTx.length ? setSelectedTxIds(/* @__PURE__ */ new Set()) : selectAllVisible(),
-      style: { width: 15, height: 15, cursor: "pointer", accentColor: T.accent, flexShrink: 0 }
-    }
-  ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text3, cursor: "pointer" }, onClick: () => selectedTxIds.size === filteredTx.length ? setSelectedTxIds(/* @__PURE__ */ new Set()) : selectAllVisible() }, selectedTxIds.size > 0 ? `${selectedTxIds.size} selected` : "Select all"), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }), selectedTxIds.size > 0 && /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      onClick: deleteSelectedTx,
-      style: { background: T.danger, color: "#fff", border: "none", borderRadius: 8, padding: "5px 12px", fontSize: 12, fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }
-    },
-    "Delete ",
-    selectedTxIds.size
-  ), /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      onClick: () => {
-        setEditMode((m) => !m);
-        setSelectedTxIds(/* @__PURE__ */ new Set());
-      },
-      style: {
-        background: editMode ? T.accentBg : "none",
-        border: `1px solid ${editMode ? T.accent : T.border}`,
-        color: editMode ? T.accent : T.text3,
-        borderRadius: 8,
-        padding: "5px 12px",
-        fontSize: 12,
-        fontWeight: 500,
-        fontFamily: "inherit",
-        cursor: "pointer",
-        transition: "all .18s"
-      }
-    },
-    editMode ? "Done" : "Edit"
-  ))), filteredTx.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: 40, textAlign: "center", color: T.text4, fontSize: 14 } }, "No transactions found."), filteredTx.length > 0 && (() => {
+  })), filteredTx.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: 40, textAlign: "center", color: T.text4, fontSize: 14 } }, "No transactions found."), filteredTx.length > 0 && (() => {
     const grouped = {};
     filteredTx.forEach((t) => {
       const key = t.source || "No Source";
@@ -14203,7 +14187,16 @@ function ExpenseTracker() {
   })())), view === "categories" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, marginBottom: 16, alignItems: "center" } }, /* @__PURE__ */ React.createElement("input", { placeholder: "New category name\u2026", value: newCat, onChange: (e) => setNewCat(e.target.value), onKeyDown: (e) => e.key === "Enter" && addCategory(), style: { flex: 1, maxWidth: 280 } }), /* @__PURE__ */ React.createElement("button", { className: "action-btn", onClick: addCategory }, "Add")), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 14, overflow: "hidden", boxShadow: T.shadow } }, categories.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: 32, textAlign: "center", color: T.text4, fontSize: 13 } }, "No categories yet."), [...categories].sort((a, b) => a.localeCompare(b)).map((cat, i, arr) => {
     const color = getCatColor(cat);
     const catTxs = rangeTxs.filter((t) => t.category === cat);
-    const total = catTxs.reduce((s, t) => s + t.amount, 0);
+    const fullTotal = catTxs.reduce((s, t) => s + t.amount, 0);
+    const sharedAmt = catTxs.filter((t) => t.shared).reduce((s, t) => s + t.amount, 0);
+    const myTotal_cat = fullTotal - sharedAmt * 0.5;
+    const hasShared = sharedAmt > 0;
+    const months = new Set(catTxs.map((t) => {
+      var _a;
+      return (_a = t.date) == null ? void 0 : _a.slice(0, 7);
+    }).filter(Boolean));
+    const monthCount = Math.max(months.size, 1);
+    const monthlyAvg = fullTotal / monthCount;
     const isExpanded = expandedCat === cat;
     const vendorGroups = Object.values(
       catTxs.reduce((acc, t) => {
@@ -14223,12 +14216,11 @@ function ExpenseTracker() {
             setExpandedVendor(null);
           } else setExpandedCat(cat);
         },
-        style: { display: "flex", alignItems: "center", gap: 12, padding: "13px 16px", cursor: "pointer", background: isExpanded ? `${color}08` : T.bgCard, transition: "background .15s" }
+        style: { display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", cursor: "pointer", background: T.bgCard, transition: "background .1s" }
       },
-      /* @__PURE__ */ React.createElement("div", { style: { width: 10, height: 10, borderRadius: "50%", background: color, flexShrink: 0 } }),
-      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 600, color: T.text } }, cat), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text3, marginTop: 1 } }, catTxs.length, " tx \xB7 ", vendorGroups.length, " vendor", vendorGroups.length !== 1 ? "s" : "")),
-      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 600, color, flexShrink: 0 } }, "$", fmt$(total)),
-      /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: T.text4, flexShrink: 0, marginLeft: 2 } }, isExpanded ? "\u25BE" : "\u203A"),
+      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 500, color: T.text } }, cat), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text4, marginTop: 1 } }, catTxs.length, " tx \xB7 ", vendorGroups.length, " vendors", months.size > 1 ? ` \xB7 ~$${fmt$(monthlyAvg)}/mo` : "")),
+      /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: T.text } }, "$", fmt$(myTotal_cat)), hasShared && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.text4 } }, "full $", fmt$(fullTotal))),
+      /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4, flexShrink: 0 } }, isExpanded ? "\u25BE" : "\u203A"),
       /* @__PURE__ */ React.createElement(
         "button",
         {
@@ -14236,8 +14228,7 @@ function ExpenseTracker() {
             e.stopPropagation();
             setConfirmDeleteCat({ name: cat, typed: "" });
           },
-          title: "Remove category",
-          style: { background: "none", border: "none", color: T.text4, fontSize: 16, padding: "2px 6px", borderRadius: 6, cursor: "pointer", flexShrink: 0, lineHeight: 1, transition: "color .15s" },
+          style: { background: "none", border: "none", color: T.text4, fontSize: 14, padding: "2px 4px", cursor: "pointer", flexShrink: 0, lineHeight: 1 },
           onMouseEnter: (e) => e.currentTarget.style.color = T.danger,
           onMouseLeave: (e) => e.currentTarget.style.color = T.text4
         },
