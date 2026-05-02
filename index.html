@@ -13074,12 +13074,9 @@ function parseCSV(text, filename) {
     const rawAmt = row[amtKey] || "0";
     const amount = parseFloat(rawAmt.replace(/[$,\s]/g, "")) || 0;
     if (amount === 0) return null;
-    let isNegativeCredit = false;
-    if (bank === "Apple Card") {
-      isNegativeCredit = amount < 0;
-    } else {
-      isNegativeCredit = false;
-    }
+    let isCredit = false;
+    if (bank === "Apple Card") isCredit = amount < 0;
+    else if (bank === "Chase") isCredit = amount > 0;
     const finalAmount = Math.abs(amount);
     if (finalAmount === 0) return null;
     let source = bank;
@@ -13095,7 +13092,7 @@ function parseCSV(text, filename) {
       }
     }
     const description = (descKey ? row[descKey] : "") || cleaned.find((v) => v && v.length > 2 && isNaN(parseFloat(v.replace(/[$,]/g, "")))) || "Unknown";
-    const autoCategory = isNegativeCredit ? "Credit" : detectAutoCategory(description, memoKey ? row[memoKey] || "" : "");
+    const autoCategory = isCredit ? "Credit" : detectAutoCategory(description, memoKey ? row[memoKey] || "" : "");
     let dateVal = dateKey ? row[dateKey] || "" : "";
     if (!dateVal) {
       dateVal = cleaned.find((v) => /\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/.test(v) || /\d{4}[\/\-]\d{2}[\/\-]\d{2}/.test(v)) || "";
