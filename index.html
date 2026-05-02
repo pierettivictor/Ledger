@@ -13418,11 +13418,11 @@ function ExpenseTracker() {
   }, [vendorMap]);
   useEffect(() => {
     setTransactions((prev) => {
-      const needsUpdate = prev.some((t) => !t.source);
+      const needsUpdate = prev.some((t) => !t.source || t.source === "No Source");
       if (!needsUpdate) return prev;
-      return prev.map((t) => t.source ? t : { ...t, source: "Wells Fargo" });
+      return prev.map((t) => !t.source || t.source === "No Source" ? { ...t, source: "Wells Fargo" } : t);
     });
-  }, []);
+  });
   const getCatColor = (cat) => catColors[cat] || COLORS[categories.indexOf(cat) % COLORS.length] || T.text3;
   const now = /* @__PURE__ */ new Date();
   const curRange = period === "custom" ? customStart && customEnd ? { start: parseDateStr(customStart), end: parseDateStr(customEnd) } : null : period === "month" ? (() => {
