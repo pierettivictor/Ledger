@@ -13072,11 +13072,13 @@ function parseCSV(text, filename) {
       row[h] = cleaned[idx] || "";
     });
     const rawAmt = row[amtKey] || "0";
-    const amount = parseFloat(rawAmt.replace(/[$,\s]/g, "")) || 0;
+    const isParenthetical = /^\(.*\)$/.test(rawAmt.trim());
+    const amount = parseFloat(rawAmt.replace(/[$,\s()]/g, "")) || 0;
     if (amount === 0) return null;
     let isCredit = false;
     if (bank === "Apple Card") isCredit = amount < 0;
     else if (bank === "Chase") isCredit = amount > 0;
+    else if (bank === "Wells Fargo") isCredit = isParenthetical || amount < 0;
     const finalAmount = Math.abs(amount);
     if (finalAmount === 0) return null;
     let source = bank;
