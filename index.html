@@ -12984,6 +12984,9 @@ function detectBank(filename, headers, rawLines) {
   if (f.includes("wells") || f.includes("wellsfargo") || f.includes("wf_") || f.includes("wf-")) return "Wells Fargo";
   if (h.includes("check number")) return "Wells Fargo";
   if (h.includes("withdrawals") && h.includes("deposits")) return "Wells Fargo";
+  if (h.includes("master category") && h.includes("payment method")) return "Wells Fargo";
+  if (h.includes("payee") && h.includes("payment method")) return "Wells Fargo";
+  if (h.includes("all payment methods") || f.includes("all_payment") || f.includes("year_end")) return "Wells Fargo";
   const firstDataLine = (rawLines[1] || rawLines[0] || "").trim();
   if (/^"?\d{2}\/\d{2}\/\d{4}"?,/.test(firstDataLine) && headers.length <= 5 && !h.includes("date")) return "Wells Fargo";
   if (sample.includes("wells fargo")) return "Wells Fargo";
@@ -13024,12 +13027,14 @@ function parseCSV(text, filename) {
   const wfAccount = bank === "Wells Fargo" ? extractWFAccount(filename || "", rawLines) : "";
   let dateKey, descKey, amtKey, memoKey;
   if (bank === "Wells Fargo") {
-    dateKey = headers.find((h) => h === "date" || h.includes("date")) || headers[0];
-    amtKey = headers.find((h) => h === "amount" || h.includes("withdrawal") || h.includes("debit")) || headers[1];
-    descKey = headers.find((h) => h === "description") || headers[4] || headers[headers.length - 1];
-    memoKey = void 0;
+    dateKey = headers.find((h) => h === "date") || headers.find((h) => h.includes("date")) || headers[2];
+    descKey = headers.find((h) => h === "payee") || headers.find((h) => h === "description") || headers[4];
+    amtKey = headers.find((h) => h === "amount") || headers.find((h) => h.includes("amount")) || headers[7];
+    const pmKey = headers.find((h) => h.includes("payment method") || h.includes("payment"));
+    memoKey = headers.find((h) => h === "description" && h !== descKey);
+    (window || {})._wfPmKey = pmKey;
   } else if (bank === "Apple Card") {
-    dateKey = headers.find((h) => h === "date" || h.includes("date"));
+    dateKey = headers.find((h) => h === "transaction date" || h.includes("transaction date"));
     descKey = headers.find((h) => h === "merchant");
     if (!descKey) descKey = headers.find((h) => h.includes("description"));
     amtKey = headers.find((h) => h.includes("amount"));
@@ -13041,12 +13046,11 @@ function parseCSV(text, filename) {
     memoKey = headers.find((h) => h === "memo");
   } else {
     dateKey = headers.find((h) => h.includes("date"));
-    descKey = headers.find(
-      (h) => h === "merchant" || h === "payee" || h === "description" || h.includes("payee") || h.includes("merchant") || h.includes("name")
-    );
+    descKey = headers.find((h) => h === "merchant" || h === "payee" || h === "description" || h.includes("payee") || h.includes("merchant") || h.includes("name"));
     amtKey = headers.find((h) => h.includes("amount") || h.includes("debit") || h.includes("charge") || h.includes("withdrawal"));
     memoKey = headers.find((h) => (h.includes("memo") || h.includes("note")) && h !== descKey);
   }
+  const wfPmKey = bank === "Wells Fargo" ? headers.find((h) => h.includes("payment method") || h === "payment method") : null;
   return lines.slice(1).map((line, i) => {
     const cols = [];
     let cur = "", inQ = false;
@@ -13080,7 +13084,15 @@ function parseCSV(text, filename) {
     if (finalAmount === 0) return null;
     let source = bank;
     if (bank === "Wells Fargo") {
-      source = wfAccount ? `Wells Fargo \xB7\xB7\xB7${wfAccount}` : "Wells Fargo";
+      const pmVal = wfPmKey ? row[wfPmKey] || "" : "";
+      const pmMatch = pmVal.match(/\.\.\.(\d{4})/);
+      if (pmMatch) {
+        source = `Wells Fargo \xB7\xB7\xB7${pmMatch[1]}`;
+      } else if (wfAccount) {
+        source = `Wells Fargo \xB7\xB7\xB7${wfAccount}`;
+      } else {
+        source = "Wells Fargo";
+      }
     }
     const description = (descKey ? row[descKey] : "") || cleaned.find((v) => v && v.length > 2 && isNaN(parseFloat(v.replace(/[$,]/g, "")))) || "Unknown";
     const autoCategory = isNegativeCredit ? "Credit" : detectAutoCategory(description, memoKey ? row[memoKey] || "" : "");
