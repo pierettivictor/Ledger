@@ -13070,15 +13070,13 @@ function parseCSV(text, filename) {
     const rawAmt = row[amtKey] || "0";
     const amount = parseFloat(rawAmt.replace(/[$,\s]/g, "")) || 0;
     if (amount === 0) return null;
-    let finalAmount;
     let isNegativeCredit = false;
     if (bank === "Apple Card") {
       isNegativeCredit = amount < 0;
-      finalAmount = Math.abs(amount);
     } else {
-      isNegativeCredit = amount > 0;
-      finalAmount = Math.abs(amount);
+      isNegativeCredit = false;
     }
+    const finalAmount = Math.abs(amount);
     if (finalAmount === 0) return null;
     let source = bank;
     if (bank === "Wells Fargo") {
@@ -13751,7 +13749,7 @@ function ExpenseTracker() {
       style: { textTransform: "capitalize", fontSize: 12, padding: "5px 9px" }
     },
     v
-  )))), /* @__PURE__ */ React.createElement("div", { style: { padding: "0 12px 8px", display: "flex", alignItems: "center", gap: 8, borderTop: `1px solid ${T.border}` } }, /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setShowPeriodPicker((p) => !p), style: {
+  )))), /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px 10px", display: "flex", alignItems: "center", gap: 8, borderTop: `1px solid ${T.border}` } }, /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setShowPeriodPicker((p) => !p), style: {
     display: "flex",
     alignItems: "center",
     gap: 5,
@@ -14111,7 +14109,7 @@ function ExpenseTracker() {
       }
     },
     editMode ? "Done" : "Edit"
-  ), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }), [["date", "Date"], ["vendor", "Vendor"], ["amount", "Amt"], ["source", "Card"], ["category", "Cat"]].map(([key, label]) => {
+  ), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }), [["date", "Date"], ["vendor", "Vendor"], ["amount", "$"], ["source", "Card"], ["category", "Cat"]].map(([key, label]) => {
     const active = txSort.by === key;
     return /* @__PURE__ */ React.createElement(
       "button",
@@ -14173,7 +14171,22 @@ function ExpenseTracker() {
             onClick: (e) => e.stopPropagation(),
             style: { width: 16, height: 16, flexShrink: 0, cursor: "pointer", accentColor: T.accent }
           }
-        ), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, color: t.description ? T.text : T.text4 } }, t.description || t.memo || "\u2014")),
+        ), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, color: t.description ? T.text : T.text4 } }, t.description || t.memo || "\u2014"), editMode && /* @__PURE__ */ React.createElement(
+          "button",
+          {
+            onClick: (e) => {
+              e.stopPropagation();
+              setTransactions((prev) => prev.filter((tx) => tx.id !== t.id));
+              setSelectedTxIds((prev) => {
+                const n = new Set(prev);
+                n.delete(t.id);
+                return n;
+              });
+            },
+            style: { background: "none", border: "none", color: T.danger, fontSize: 16, padding: "0 4px", cursor: "pointer", flexShrink: 0, lineHeight: 1, fontWeight: 600 }
+          },
+          "\xD7"
+        )),
         /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, paddingLeft: editMode ? 24 : 0 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text3, whiteSpace: "nowrap", flexShrink: 0 } }, t.date), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0, marginLeft: 2, color: isCredit ? T.green : isTransfer ? T.text3 : T.text2 } }, isCredit ? "\u2212" : "", "$", fmt$(t.amount)), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }), !editMode && /* @__PURE__ */ React.createElement(
           "button",
           {
