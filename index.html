@@ -14,7 +14,7 @@
     html,body{margin:0;padding:0;height:100%;background:#F2F2F7;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);}
     body{overscroll-behavior-y:none;-webkit-font-smoothing:antialiased;}
     #root{min-height:100vh;}
-    #error-banner{display:none;position:fixed;top:0;left:0;right:0;padding:12px 16px;background:#FF3B30;color:#fff;font-family:monospace;font-size:11px;z-index:9999;white-space:pre-wrap;word-break:break-all;max-height:50wrap;overflow:auto;}
+    #error-banner{display:none;position:fixed;top:0;left:0;right:0;padding:12px 16px;background:#FF3B30;color:#fff;font-family:monospace;font-size:11px;z-index:9999;white-space:pre-wrap;word-break:break-all;max-height:50vh;overflow:auto;}
   </style>
 </head>
 <body>
@@ -13108,7 +13108,7 @@ function parseCSV(text, filename) {
       source,
       imported: true
     };
-  }).filter(Boolean).filter((t) => t.amount > 0);
+  }).filter(Boolean);
 }
 function extractVendors(transactions, vendorMap) {
   const map = {};
@@ -13422,7 +13422,9 @@ function ExpenseTracker() {
     if (!Object.keys(vendorMap).length) return;
     setTransactions((prev) => prev.map((t) => {
       const key = t.description.trim().toLowerCase();
-      return vendorMap[key] ? { ...t, category: vendorMap[key] } : t;
+      const memoKey = (t.memo || "").trim().toLowerCase();
+      const cat = vendorMap[key] || vendorMap[memoKey] || "";
+      return cat ? { ...t, category: cat } : t;
     }));
   }, [vendorMap]);
   useEffect(() => {
