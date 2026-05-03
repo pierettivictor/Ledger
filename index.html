@@ -13094,7 +13094,7 @@ function parseCSV(text, filename) {
       }
     }
     const description = (descKey ? row[descKey] : "") || cleaned.find((v) => v && v.length > 2 && isNaN(parseFloat(v.replace(/[$,]/g, "")))) || "Unknown";
-    const autoCategory = isCredit ? "Credit" : detectAutoCategory(description, memoKey ? row[memoKey] || "" : "");
+    const autoCategory = detectAutoCategory(description, memoKey ? row[memoKey] || "" : "");
     let dateVal = dateKey ? row[dateKey] || "" : "";
     if (!dateVal) {
       dateVal = cleaned.find((v) => /\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/.test(v) || /\d{4}[\/\-]\d{2}[\/\-]\d{2}/.test(v)) || "";
@@ -13106,6 +13106,7 @@ function parseCSV(text, filename) {
       description: description.trim(),
       memo: memoKey ? row[memoKey] || "" : "",
       amount: finalAmount,
+      isCredit,
       category: autoCategory,
       source,
       imported: true
@@ -13422,13 +13423,21 @@ function ExpenseTracker() {
   }, [transactions, categories, catColors, vendorMap, importLog]);
   useEffect(() => {
     if (!Object.keys(vendorMap).length) return;
-    setTransactions((prev) => prev.map((t) => {
-      const key = t.description.trim().toLowerCase();
-      const memoKey = (t.memo || "").trim().toLowerCase();
-      const cat = vendorMap[key] || vendorMap[memoKey] || "";
-      return cat ? { ...t, category: cat } : t;
-    }));
-  }, [vendorMap]);
+    setTransactions((prev) => {
+      let changed = false;
+      const next = prev.map((t) => {
+        const key = t.description.trim().toLowerCase();
+        const mk = (t.memo || "").trim().toLowerCase();
+        const cat = vendorMap[key] || vendorMap[mk] || "";
+        if (cat && t.category !== cat) {
+          changed = true;
+          return { ...t, category: cat };
+        }
+        return t;
+      });
+      return changed ? next : prev;
+    });
+  });
   useEffect(() => {
     setTransactions((prev) => {
       const needsUpdate = prev.some((t) => !t.source || t.source === "No Source");
@@ -13454,8 +13463,8 @@ function ExpenseTracker() {
   const SHARED_CAT = "Shared";
   const businessTxs = spendingTxs.filter((t) => t.category === BUSINESS_CAT);
   const sharedTxs = spendingTxs.filter((t) => t.shared && t.category !== BUSINESS_CAT);
-  const creditTxs = spendingTxs.filter((t) => t.category === "Credit" && !t.shared && t.category !== BUSINESS_CAT);
-  const personalTxs = spendingTxs.filter((t) => !t.shared && t.category !== BUSINESS_CAT && t.category !== "Credit");
+  const creditTxs = spendingTxs.filter((t) => t.isCredit && !t.shared && t.category !== BUSINESS_CAT);
+  const personalTxs = spendingTxs.filter((t) => !t.isCredit && !t.shared && t.category !== BUSINESS_CAT);
   const businessTotal = businessTxs.reduce((s, t) => s + t.amount, 0);
   const sharedFullTotal = sharedTxs.reduce((s, t) => s + t.amount, 0);
   const sharedMyTotal = sharedFullTotal * 0.5;
@@ -13464,8 +13473,8 @@ function ExpenseTracker() {
   const myTotal = personalTotal + sharedMyTotal;
   const prevBusinessTxs = prevSpendingTxs.filter((t) => t.category === BUSINESS_CAT);
   const prevSharedTxs = prevSpendingTxs.filter((t) => t.shared && t.category !== BUSINESS_CAT);
-  const prevCreditTxs = prevSpendingTxs.filter((t) => t.category === "Credit" && !t.shared && t.category !== BUSINESS_CAT);
-  const prevPersonalTxs = prevSpendingTxs.filter((t) => !t.shared && t.category !== BUSINESS_CAT && t.category !== "Credit");
+  const prevCreditTxs = prevSpendingTxs.filter((t) => t.isCredit && !t.shared && t.category !== BUSINESS_CAT);
+  const prevPersonalTxs = prevSpendingTxs.filter((t) => !t.isCredit && !t.shared && t.category !== BUSINESS_CAT);
   const prevMyTotal = prevPersonalTxs.reduce((s, t) => s + t.amount, 0) - prevCreditTxs.reduce((s, t) => s + t.amount, 0) + prevSharedTxs.reduce((s, t) => s + t.amount, 0) * 0.5;
   const prevBusinessTotal = prevBusinessTxs.reduce((s, t) => s + t.amount, 0);
   const curTotal = myTotal;
@@ -13677,7 +13686,12 @@ function ExpenseTracker() {
     if (file) handleFiles([file]);
   }, [handleFiles]);
   const confirmImport = () => {
-    const toImport = importPreview.filter((t) => !t._isDuplicate || t._keepAnyway);
+    const toImport = importPreview.filter((t) => !t._isDuplicate || t._keepAnyway).map((t) => {
+      const key = t.description.trim().toLowerCase();
+      const memoKey = (t.memo || "").trim().toLowerCase();
+      const cat = vendorMap[key] || vendorMap[memoKey] || t.category || "";
+      return { ...t, category: cat };
+    });
     const skipped2 = importPreview.filter((t) => t._isDuplicate && !t._keepAnyway).length;
     const logEntry = {
       id: `log-${Date.now()}`,
@@ -14210,7 +14224,7 @@ function ExpenseTracker() {
       const isSelected = selectedTxIds.has(t.id);
       const catColor = t.category ? getCatColor(t.category) : null;
       const isTransfer = t.category === "Transfer";
-      const isCredit = t.category === "Credit";
+      const isCredit = t.isCredit;
       return /* @__PURE__ */ React.createElement(
         "div",
         {
