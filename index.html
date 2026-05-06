@@ -13426,10 +13426,11 @@ function ExpenseTracker() {
     setTransactions((prev) => {
       let changed = false;
       const next = prev.map((t) => {
+        if (t.category) return t;
         const key = t.description.trim().toLowerCase();
         const mk = (t.memo || "").trim().toLowerCase();
         const cat = vendorMap[key] || vendorMap[mk] || "";
-        if (cat && t.category !== cat) {
+        if (cat) {
           changed = true;
           return { ...t, category: cat };
         }
@@ -13437,7 +13438,7 @@ function ExpenseTracker() {
       });
       return changed ? next : prev;
     });
-  });
+  }, [vendorMap]);
   useEffect(() => {
     setTransactions((prev) => {
       const needsUpdate = prev.some((t) => !t.source || t.source === "No Source");
@@ -13447,7 +13448,7 @@ function ExpenseTracker() {
         return { ...t, source: "Wells Fargo" };
       });
     });
-  });
+  }, []);
   const getCatColor = (cat) => catColors[cat] || COLORS[categories.indexOf(cat) % COLORS.length] || T.text3;
   const now = /* @__PURE__ */ new Date();
   const curRange = period === "custom" ? customStart && customEnd ? { start: parseDateStr(customStart), end: parseDateStr(customEnd) } : null : period === "month" ? (() => {
@@ -13585,6 +13586,11 @@ function ExpenseTracker() {
   const updateTxCategory = (id, cat) => setTransactions((prev) => prev.map((t) => t.id === id ? { ...t, category: cat } : t));
   const updateTxSource = (id, src) => setTransactions((prev) => prev.map((t) => t.id === id ? { ...t, source: src } : t));
   const toggleShared = (id) => setTransactions((prev) => prev.map((t) => t.id === id ? { ...t, shared: !t.shared } : t));
+  const toggleCategoryShared = (cat) => setTransactions((prev) => {
+    const catTxs = prev.filter((t) => t.category === cat);
+    const allShared = catTxs.length > 0 && catTxs.every((t) => t.shared);
+    return prev.map((t) => t.category === cat ? { ...t, shared: !allShared } : t);
+  });
   const toggleVendorShared = (vendorKey) => setTransactions((prev) => {
     const vendorTxs = prev.filter((t) => t.description.trim().toLowerCase() === vendorKey);
     const allShared = vendorTxs.every((t) => t.shared);
@@ -14260,7 +14266,14 @@ function ExpenseTracker() {
           },
           "\xD7"
         )),
-        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, paddingLeft: editMode ? 24 : 0 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text3, whiteSpace: "nowrap", flexShrink: 0 } }, t.date), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0, marginLeft: 2, color: isCredit ? T.green : isTransfer ? T.text3 : T.text2 } }, isCredit ? "\u2212" : "", "$", fmt$(t.amount)), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }), !editMode && /* @__PURE__ */ React.createElement(
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, paddingLeft: editMode ? 24 : 0 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text3, whiteSpace: "nowrap", flexShrink: 0 } }, t.date), /* @__PURE__ */ React.createElement("span", { style: {
+          fontSize: 13,
+          fontWeight: 600,
+          whiteSpace: "nowrap",
+          flexShrink: 0,
+          marginLeft: 2,
+          color: isCredit ? T.green : isTransfer ? T.text3 : T.text2
+        } }, isCredit ? /* @__PURE__ */ React.createElement("span", { style: { color: T.green } }, "\u2212$", fmt$(t.amount)) : `$${fmt$(t.amount)}`), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }), !editMode && /* @__PURE__ */ React.createElement(
           "button",
           {
             onClick: (e) => {
@@ -14380,6 +14393,28 @@ function ExpenseTracker() {
       },
       /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 500, color: T.text } }, cat), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text4, marginTop: 1 } }, catTxs.length, " tx \xB7 ", vendorGroups.length, " vendors", months.size > 1 ? ` \xB7 ~$${fmt$(monthlyAvg)}/mo` : "")),
       /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: T.text } }, "$", fmt$(myTotal_cat)), hasShared && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.text4 } }, "full $", fmt$(fullTotal))),
+      /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          onClick: (e) => {
+            e.stopPropagation();
+            toggleCategoryShared(cat);
+          },
+          style: {
+            fontSize: 10,
+            padding: "2px 7px",
+            borderRadius: 10,
+            border: `1px solid ${catTxs.every((t) => t.shared) && catTxs.length > 0 ? T.orange : T.border}`,
+            background: catTxs.every((t) => t.shared) && catTxs.length > 0 ? `${T.orange}20` : "none",
+            color: catTxs.every((t) => t.shared) && catTxs.length > 0 ? T.orange : T.text4,
+            fontWeight: 600,
+            cursor: "pointer",
+            fontFamily: "inherit",
+            flexShrink: 0
+          }
+        },
+        "\xBD"
+      ),
       /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4, flexShrink: 0 } }, isExpanded ? "\u25BE" : "\u203A"),
       /* @__PURE__ */ React.createElement(
         "button",
