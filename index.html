@@ -13936,26 +13936,7 @@ function ExpenseTracker() {
             borderTop: `1px solid ${T.border}`
           } }, /* @__PURE__ */ React.createElement("span", { style: { flex: 1, fontSize: 11, color: T.text3 } }, t.date), t.shared && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, color: T.orange, marginRight: 6 } }, "\xBD"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: t.isCredit ? T.green : T.text2, fontWeight: 500 } }, t.isCredit ? "\u2212" : "", "$", fmt$(t.amount)))));
         }));
-      }), isOpen && groupedCats.unassigned.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { borderTop: `1px solid ${T.border}`, padding: "8px 16px", background: T.bg } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.text4, marginBottom: 6, fontWeight: 500 } }, "Assign categories to ", g.label, ":"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 5 } }, groupedCats.unassigned.map((cat) => /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          key: cat,
-          onClick: () => setCatGroups((prev) => ({ ...prev, [cat]: g.key })),
-          style: {
-            fontSize: 11,
-            padding: "3px 10px",
-            borderRadius: 10,
-            border: `1px solid ${g.color}44`,
-            background: `${g.color}10`,
-            color: g.color,
-            fontFamily: "inherit",
-            cursor: "pointer",
-            fontWeight: 500
-          }
-        },
-        "+ ",
-        cat
-      )))));
+      }));
     }), /* @__PURE__ */ React.createElement("div", { style: { height: 8 } })), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderRadius: 10, overflow: "hidden", border: `1px solid ${T.border}`, marginBottom: 16 } }, [
       ["Shared", `${fmt$(sharedMyTotal)} my half`, `Full: $${fmt$(sharedFullTotal)}`, T.orange],
       ["Cuban Palms", `${fmt$(businessTotal)}`, `Business`, T.green],
@@ -14475,10 +14456,33 @@ function ExpenseTracker() {
             setExpandedVendor(null);
           } else setExpandedCat(cat);
         },
-        style: { display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", cursor: "pointer", background: T.bgCard, transition: "background .1s" }
+        style: { display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", cursor: "pointer", background: T.bgCard, transition: "background .1s" }
       },
-      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 500, color: T.text } }, cat), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text4, marginTop: 1 } }, catTxs.length, " tx \xB7 ", vendorGroups.length, " vendors", months.size > 1 ? ` \xB7 ~$${fmt$(monthlyAvg)}/mo` : "")),
-      /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: T.text } }, "$", fmt$(myTotal_cat)), hasShared && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.text4 } }, "full $", fmt$(fullTotal))),
+      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 500, color: T.text } }, cat), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginTop: 2, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4 } }, catTxs.length, " tx \xB7 ", vendorGroups.length, " vendors", months.size > 1 ? ` \xB7 ~$${fmt$(monthlyAvg)}/mo` : ""), hasShared && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: T.orange, background: `${T.orange}15`, borderRadius: 6, padding: "1px 6px", fontWeight: 600 } }, "\xBD"), hasShared && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4 } }, "full $", fmt$(fullTotal)))),
+      /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: T.text } }, "$", fmt$(myTotal_cat))),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 2, flexShrink: 0 }, onClick: (e) => e.stopPropagation() }, [["E", "essential", T.accent], ["D", "discretionary", T.orange], ["\u2014", null, T.text4]].map(([lbl, val, col]) => {
+        const active = catGroups[cat] === val || val === null && !catGroups[cat];
+        return /* @__PURE__ */ React.createElement(
+          "button",
+          {
+            key: lbl,
+            onClick: () => setCatGroups((prev) => ({ ...prev, [cat]: val })),
+            style: {
+              width: 22,
+              height: 20,
+              borderRadius: 5,
+              border: `1px solid ${active ? col : T.border}`,
+              background: active ? `${col}20` : "none",
+              color: active ? col : T.text4,
+              fontSize: 9,
+              fontWeight: 700,
+              fontFamily: "inherit",
+              cursor: "pointer"
+            }
+          },
+          lbl
+        );
+      })),
       /* @__PURE__ */ React.createElement(
         "button",
         {
