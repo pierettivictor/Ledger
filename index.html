@@ -12987,6 +12987,8 @@ function detectBank(filename, headers, rawLines) {
   if (h.includes("master category") && h.includes("payment method")) return "Wells Fargo";
   if (h.includes("payee") && h.includes("payment method")) return "Wells Fargo";
   if (h.includes("all payment methods") || f.includes("all_payment") || f.includes("year_end")) return "Wells Fargo";
+  if (h.includes("date") && h.includes("description") && h.includes("amount") && h.includes("status")) return "Wells Fargo";
+  if (f.includes("checking") && h.includes("amount")) return "Wells Fargo";
   const firstDataLine = (rawLines[1] || rawLines[0] || "").trim();
   if (/^"?\d{2}\/\d{2}\/\d{4}"?,/.test(firstDataLine) && headers.length <= 5 && !h.includes("date")) return "Wells Fargo";
   if (sample.includes("wells fargo")) return "Wells Fargo";
@@ -13014,25 +13016,39 @@ function parseCSV(text, filename) {
   const rawLines = text.trim().split("\n");
   if (rawLines.length < 1) return [];
   const firstLine = rawLines[0].trim();
-  const wfHeaderless = /^"?\d{2}\/\d{2}\/\d{4}"?,/.test(firstLine);
+  const secondLine = rawLines[1] ? rawLines[1].trim().toLowerCase() : "";
+  const isNewWFFormat = !/^"?\d{2}\/\d{2}\/\d{4}"?,/.test(firstLine) && secondLine.includes("date") && secondLine.includes("description") && secondLine.includes("amount") && secondLine.includes("status");
+  const wfHeaderless = !isNewWFFormat && /^"?\d{2}\/\d{2}\/\d{4}"?,/.test(firstLine);
   let lines = rawLines;
   let syntheticBank = "";
-  if (wfHeaderless) {
+  let wfAccountOverride = "";
+  if (isNewWFFormat) {
+    const acctName = firstLine.replace(/"/g, "").trim();
+    wfAccountOverride = acctName;
+    lines = rawLines.slice(1);
+    syntheticBank = "Wells Fargo";
+  } else if (wfHeaderless) {
     lines = ["Date,Amount,col2,col3,Description", ...rawLines];
     syntheticBank = "Wells Fargo";
   }
   if (lines.length < 2) return [];
   const headers = lines[0].split(",").map((h) => h.replace(/"/g, "").replace(/^\uFEFF/, "").replace(/[^\x20-\x7E]/g, "").trim().toLowerCase());
   const bank = syntheticBank || detectBank(filename || "", headers, lines);
-  const wfAccount = bank === "Wells Fargo" ? extractWFAccount(filename || "", rawLines) : "";
+  const wfAccount = bank === "Wells Fargo" ? wfAccountOverride || extractWFAccount(filename || "", rawLines) : "";
   let dateKey, descKey, amtKey, memoKey;
   if (bank === "Wells Fargo") {
-    dateKey = headers.find((h) => h === "date") || headers.find((h) => h.includes("date")) || headers[2];
-    descKey = headers.find((h) => h === "payee") || headers.find((h) => h === "description") || headers[4];
-    amtKey = headers.find((h) => h === "amount") || headers.find((h) => h.includes("amount")) || headers[7];
-    const pmKey = headers.find((h) => h.includes("payment method") || h.includes("payment"));
-    memoKey = headers.find((h) => h === "description" && h !== descKey);
-    (window || {})._wfPmKey = pmKey;
+    const isNewFormat = headers.includes("date") && headers.includes("description") && headers.includes("amount") && headers.includes("status");
+    if (isNewFormat) {
+      dateKey = "date";
+      descKey = "description";
+      amtKey = "amount";
+      memoKey = void 0;
+    } else {
+      dateKey = headers.find((h) => h === "date") || headers.find((h) => h.includes("date")) || headers[2];
+      descKey = headers.find((h) => h === "payee") || headers.find((h) => h === "description") || headers[4];
+      amtKey = headers.find((h) => h === "amount") || headers.find((h) => h.includes("amount")) || headers[7];
+      memoKey = void 0;
+    }
   } else if (bank === "Apple Card") {
     dateKey = headers.find((h) => h === "transaction date" || h.includes("transaction date"));
     descKey = headers.find((h) => h === "merchant");
