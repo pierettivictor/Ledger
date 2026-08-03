@@ -13024,7 +13024,8 @@ function parseCSV(text, filename) {
   let wfAccountOverride = "";
   if (isNewWFFormat) {
     const acctName = firstLine.replace(/"/g, "").trim();
-    wfAccountOverride = acctName;
+    const acctNum = acctName.match(/[\-\s](\d+)$/);
+    wfAccountOverride = acctNum ? `Wells Fargo (${acctName})` : acctName || "Wells Fargo";
     lines = rawLines.slice(1);
     syntheticBank = "Wells Fargo";
   } else if (wfHeaderless) {
@@ -13517,6 +13518,7 @@ function ExpenseTracker() {
   const normalizeSource = (src) => {
     if (!src) return "Wells Fargo";
     if (src.toLowerCase().includes("wells")) return "Wells Fargo";
+    if (src.toLowerCase().includes("checking") || src.toLowerCase().includes("savings")) return "Wells Fargo";
     if (src.toLowerCase().includes("chase")) return "Chase";
     if (src.toLowerCase().includes("apple")) return "Apple Card";
     return src;
