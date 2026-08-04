@@ -13022,12 +13022,16 @@ function parseCSV(text, filename) {
   if (rawLines.length < 1) return [];
   const firstLine = rawLines[0].trim();
   const secondLine = rawLines[1] ? rawLines[1].trim().toLowerCase() : "";
-  const isNewWFFormat = !/^"?\d{2}\/\d{2}\/\d{4}"?,/.test(firstLine) && secondLine.includes("date") && secondLine.includes("description") && secondLine.includes("amount") && secondLine.includes("status");
-  const wfHeaderless = !isNewWFFormat && /^"?\d{2}\/\d{2}\/\d{4}"?,/.test(firstLine);
+  const isNewChaseFormat = !/^"?\d{2}\/\d{2}\/\d{4}"?,/.test(firstLine) && secondLine.includes("transaction date") && secondLine.includes("post date");
+  const isNewWFFormat = !isNewChaseFormat && !/^"?\d{2}\/\d{2}\/\d{4}"?,/.test(firstLine) && secondLine.includes("date") && secondLine.includes("description") && secondLine.includes("amount") && secondLine.includes("status");
+  const wfHeaderless = !isNewWFFormat && !isNewChaseFormat && /^"?\d{2}\/\d{2}\/\d{4}"?,/.test(firstLine);
   let lines = rawLines;
   let syntheticBank = "";
   let wfAccountOverride = "";
-  if (isNewWFFormat) {
+  if (isNewChaseFormat) {
+    lines = rawLines.slice(1);
+    syntheticBank = "Chase";
+  } else if (isNewWFFormat) {
     const acctName = firstLine.replace(/"/g, "").trim();
     const acctNum = acctName.match(/[\-\s](\d+)$/);
     wfAccountOverride = acctNum ? `Wells Fargo (${acctName})` : acctName || "Wells Fargo";
@@ -13471,6 +13475,13 @@ function ExpenseTracker() {
   }, [vendorMap]);
   useEffect(() => {
     setTransactions((prev) => {
+      const needsUpdate = prev.some((t) => t.amount < 0);
+      if (!needsUpdate) return prev;
+      return prev.map((t) => t.amount < 0 ? { ...t, amount: Math.abs(t.amount), isCredit: true } : t);
+    });
+  }, []);
+  useEffect(() => {
+    setTransactions((prev) => {
       const needsUpdate = prev.some((t) => !t.source || t.source === "No Source");
       if (!needsUpdate) return prev;
       return prev.map((t) => {
@@ -13900,10 +13911,10 @@ function ExpenseTracker() {
     });
     const calcGroup = (cats) => {
       return cats.map((cat) => {
-        const catTxs = rangeTxs.filter((t) => t.category === cat);
-        const fullTotal = catTxs.reduce((s, t) => s + (t.isCredit ? -t.amount : t.amount), 0);
+        const catTxs = rangeTxs.filter((t) => t.category === cat && !t.isCredit);
+        const fullTotal = catTxs.reduce((s, t) => s + t.amount, 0);
         const sharedAmt = catTxs.filter((t) => t.shared).reduce((s, t) => s + t.amount, 0);
-        const myAmt = fullTotal - sharedAmt * 0.5;
+        const myAmt = fullTotal - sharedAmt + sharedAmt * 0.5;
         const vMap = {};
         catTxs.forEach((t) => {
           const k = t.description.trim().toLowerCase();
