@@ -13909,34 +13909,34 @@ function ExpenseTracker() {
       else if (g === "discretionary") groupedCats.discretionary.push(cat);
       else groupedCats.unassigned.push(cat);
     });
-    const calcGroup = (cats) => {
-      return cats.map((cat) => {
-        const catTxs = rangeTxs.filter((t) => t.category === cat && !t.isCredit);
-        const fullTotal = catTxs.reduce((s, t) => s + t.amount, 0);
-        const sharedAmt = catTxs.filter((t) => t.shared).reduce((s, t) => s + t.amount, 0);
-        const myAmt = fullTotal - sharedAmt + sharedAmt * 0.5;
-        const vMap = {};
-        catTxs.forEach((t) => {
-          const k = t.description.trim().toLowerCase();
-          if (!vMap[k]) vMap[k] = { name: t.description.trim(), total: 0, txs: [] };
-          vMap[k].total += t.isCredit ? -t.amount : t.amount;
-          vMap[k].txs.push(t);
-        });
-        const vendors2 = Object.values(vMap).sort((a, b) => Math.abs(b.total) - Math.abs(a.total));
-        return { cat, myAmt, fullTotal, sharedAmt, vendors: vendors2, txCount: catTxs.length };
-      }).filter((c) => c.fullTotal !== 0);
+    const buildCatEntry = (label, catTxs) => {
+      const fullTotal = catTxs.reduce((s, t) => s + t.amount, 0);
+      const sharedAmt = catTxs.filter((t) => t.shared).reduce((s, t) => s + t.amount, 0);
+      const myAmt = fullTotal - sharedAmt + sharedAmt * 0.5;
+      const vMap = {};
+      catTxs.forEach((t) => {
+        const k = t.description.trim().toLowerCase();
+        if (!vMap[k]) vMap[k] = { name: t.description.trim(), total: 0, txs: [] };
+        vMap[k].total += t.amount;
+        vMap[k].txs.push(t);
+      });
+      const vendors2 = Object.values(vMap).sort((a, b) => b.total - a.total);
+      return { cat: label, myAmt, fullTotal, sharedAmt, vendors: vendors2, txCount: catTxs.length };
     };
+    const calcGroup = (cats) => cats.map((cat) => buildCatEntry(cat, rangeTxs.filter((t) => t.category === cat && !t.isCredit && t.category !== "Transfer"))).filter((c) => c.fullTotal !== 0);
+    const uncatTxs = rangeTxs.filter((t) => !t.category && !t.isCredit);
+    const unassignedCats = calcGroup(groupedCats.unassigned);
+    if (uncatTxs.length > 0) unassignedCats.push(buildCatEntry("Uncategorized", uncatTxs));
     const GROUPS = [
       { key: "essential", label: "Essential", color: T.accent, cats: calcGroup(groupedCats.essential) },
-      { key: "discretionary", label: "Discretionary", color: T.orange, cats: calcGroup(groupedCats.discretionary) }
-    ];
-    const essTotal = GROUPS[0].cats.reduce((s, c) => s + c.myAmt, 0);
-    const discTotal = GROUPS[1].cats.reduce((s, c) => s + c.myAmt, 0);
-    const grandTotal = essTotal + discTotal;
+      { key: "discretionary", label: "Discretionary", color: T.orange, cats: calcGroup(groupedCats.discretionary) },
+      { key: "unassigned", label: "Unassigned", color: T.text3, cats: unassignedCats }
+    ].filter((g) => g.cats.length > 0);
+    const grandTotal = GROUPS.reduce((s, g) => s + g.cats.reduce((a, c) => a + c.myAmt, 0), 0);
     return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, border: `2px solid ${T.accent}`, borderRadius: 16, marginBottom: 12, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", height: 4 } }, grandTotal > 0 && GROUPS.map((g) => {
       const t = g.cats.reduce((s, c) => s + c.myAmt, 0);
       return /* @__PURE__ */ React.createElement("div", { key: g.key, style: { flex: Math.max(t, 0), background: g.color } });
-    })), /* @__PURE__ */ React.createElement("div", { style: { padding: "14px 16px 8px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.accent, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 2 } }, "My Expenses"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 28, fontWeight: 700, color: T.text, letterSpacing: "-.5px" } }, "$", fmt$(myTotal))), GROUPS.map((g) => {
+    })), /* @__PURE__ */ React.createElement("div", { style: { padding: "14px 16px 8px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.accent, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 2 } }, "My Expenses"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 28, fontWeight: 700, color: T.text, letterSpacing: "-.5px" } }, "$", fmt$(myTotal)), Math.abs(grandTotal - myTotal) > 0.01 && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.danger, marginTop: 3 } }, "Groups sum to $", fmt$(grandTotal), " \u2014 $", fmt$(Math.abs(grandTotal - myTotal)), " difference")), GROUPS.map((g) => {
       const gTotal = g.cats.reduce((s, c) => s + c.myAmt, 0);
       const pct = grandTotal > 0 ? Math.round(gTotal / grandTotal * 100) : 0;
       const isOpen = dashGroupOpen === g.key;
