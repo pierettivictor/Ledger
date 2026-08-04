@@ -1,26 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
   <meta name="apple-mobile-web-app-title" content="Ledger"/>
   <meta name="theme-color" content="#F2F2F7"/>
   <title>Ledger</title>
-  <link rel="manifest" href="manifest.json"/>
-  <link rel="apple-touch-icon" href="icon-192.png"/>
-  <style>
-    html,body{margin:0;padding:0;height:100%;background:#F2F2F7;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);}
-    body{overscroll-behavior-y:none;-webkit-font-smoothing:antialiased;}
-    #root{min-height:100vh;}
-    #error-banner{display:none;position:fixed;top:0;left:0;right:0;padding:12px 16px;background:#FF3B30;color:#fff;font-family:monospace;font-size:11px;z-index:9999;white-space:pre-wrap;word-break:break-all;max-height:50vh;overflow:auto;}
-  </style>
-</head>
-<body>
-  <div id="error-banner"></div>
-  <div id="root"></div>
-  <script>window.onerror=function(msg,src,line,col,err){var b=document.getElementById('error-banner');b.style.display='block';b.textContent='Error: '+msg+' ('+line+':'+col+')\n'+(err&&err.stack?err.stack:'');return true;};</script>
+  <style>html,body{margin:0;padding:0;height:100%;background:#F2F2F7;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);}body{overscroll-behavior-y:none;-webkit-font-smoothing:antialiased;}#root{min-height:100vh;}#error-banner{display:none;position:fixed;top:0;left:0;right:0;padding:12px 16px;background:#FF3B30;color:#fff;font-family:monospace;font-size:11px;z-index:9999;white-space:pre-wrap;word-break:break-all;max-height:50vh;overflow:auto;}</style>
+</head><body>
+  <div id="error-banner"></div><div id="root"></div>
+  <script>window.onerror=function(msg,src,line,col,err){var b=document.getElementById('error-banner');b.style.display='block';b.textContent='Error: '+msg+'\n'+(err&&err.stack?err.stack:'');return true;};</script>
   <script>(() => {
   var __getOwnPropNames = Object.getOwnPropertyNames;
   var __commonJS = (cb, mod) => function __require() {
@@ -12759,8 +12747,7 @@ react-dom/cjs/react-dom-client.production.js:
    * LICENSE file in the root directory of this source tree.
    *)
 */
-</script>
-  <script>const { useState, useEffect, useRef, useCallback } = React;
+</script><script>const { useState, useEffect, useRef, useCallback } = React;
 const STORAGE_KEY = "expense-tracker-data";
 const DEFAULT_CATEGORIES = [
   "Car",
@@ -12937,35 +12924,51 @@ const filterByRange = (txs, range) => !range ? txs : txs.filter((t) => {
 });
 const pctChange = (cur, prev) => !prev || prev === 0 ? null : (cur - prev) / prev * 100;
 const TRANSFER_PATTERNS = [
-  /transfer/i,
-  /payment thank you/i,
-  /autopay/i,
-  /ach deposit/i,
-  /ach credit/i,
-  /ach payment/i,
   /online transfer/i,
   /mobile transfer/i,
+  /internet transfer/i,
   /balance transfer/i,
   /funds transfer/i,
-  /internet transfer/i,
-  /direct deposit/i,
   /wire transfer/i,
-  /zelle/i,
   /external transfer/i,
   /account transfer/i,
-  /bank transfer/i
+  /bank transfer/i,
+  /zelle to /i,
+  // only outgoing Zelle = transfer
+  /payment thank you/i,
+  /autopay/i,
+  /ach payment/i,
+  /credit card payment/i,
+  /card payment/i
+];
+const CUBAN_PALMS_PATTERNS = [
+  /executive villas/i,
+  /cuban palms/i,
+  /vacay home/i
 ];
 const CREDIT_PATTERNS = [
   /refund/i,
-  /return/i,
+  /purchase return/i,
   /credit adjustment/i,
   /reversal/i,
   /cashback/i,
   /cash back/i,
   /reward/i
 ];
+const INCOME_PATTERNS = [
+  /payroll/i,
+  /salary/i,
+  /direct deposit/i,
+  /ach deposit/i,
+  /ach credit/i,
+  /zelle from /i,
+  // incoming Zelle = income/credit
+  /cash disb/i,
+  /disbursement/i
+];
 function detectAutoCategory(description, memo) {
   const s = (description + " " + memo).toLowerCase();
+  if (CUBAN_PALMS_PATTERNS.some((p) => p.test(s))) return "Cuban Palms";
   if (TRANSFER_PATTERNS.some((p) => p.test(s))) return "Transfer";
   if (CREDIT_PATTERNS.some((p) => p.test(s))) return "Credit";
   return "";
@@ -13095,7 +13098,13 @@ function parseCSV(text, filename) {
     let isCredit = false;
     if (bank === "Apple Card") isCredit = amount < 0;
     else if (bank === "Chase") isCredit = amount > 0;
-    else if (bank === "Wells Fargo") isCredit = isParenthetical || amount < 0;
+    else if (bank === "Wells Fargo") {
+      if (isNewWFFormat) {
+        isCredit = amount > 0;
+      } else {
+        isCredit = isParenthetical || amount < 0;
+      }
+    }
     const finalAmount = Math.abs(amount);
     if (finalAmount === 0) return null;
     let source = bank;
@@ -13478,25 +13487,22 @@ function ExpenseTracker() {
   const prevRange = period === "all" || !curRange ? null : getPrevRange(period, curRange);
   const rangeTxs = filterByRange(transactions, curRange);
   const prevTxs = filterByRange(transactions, prevRange);
-  const spendingTxs = rangeTxs.filter((t) => t.category !== "Transfer");
-  const prevSpendingTxs = prevTxs.filter((t) => t.category !== "Transfer");
+  const spendingTxs = rangeTxs.filter((t) => t.category !== "Transfer" && !t.isCredit);
+  const prevSpendingTxs = prevTxs.filter((t) => t.category !== "Transfer" && !t.isCredit);
   const BUSINESS_CAT = "Cuban Palms";
   const SHARED_CAT = "Shared";
   const businessTxs = spendingTxs.filter((t) => t.category === BUSINESS_CAT);
   const sharedTxs = spendingTxs.filter((t) => t.shared && t.category !== BUSINESS_CAT);
-  const creditTxs = spendingTxs.filter((t) => t.isCredit && !t.shared && t.category !== BUSINESS_CAT);
-  const personalTxs = spendingTxs.filter((t) => !t.isCredit && !t.shared && t.category !== BUSINESS_CAT);
+  const personalTxs = spendingTxs.filter((t) => !t.shared && t.category !== BUSINESS_CAT);
   const businessTotal = businessTxs.reduce((s, t) => s + t.amount, 0);
   const sharedFullTotal = sharedTxs.reduce((s, t) => s + t.amount, 0);
   const sharedMyTotal = sharedFullTotal * 0.5;
-  const creditTotal = creditTxs.reduce((s, t) => s + t.amount, 0);
-  const personalTotal = personalTxs.reduce((s, t) => s + t.amount, 0) - creditTotal;
+  const personalTotal = personalTxs.reduce((s, t) => s + t.amount, 0);
   const myTotal = personalTotal + sharedMyTotal;
   const prevBusinessTxs = prevSpendingTxs.filter((t) => t.category === BUSINESS_CAT);
   const prevSharedTxs = prevSpendingTxs.filter((t) => t.shared && t.category !== BUSINESS_CAT);
-  const prevCreditTxs = prevSpendingTxs.filter((t) => t.isCredit && !t.shared && t.category !== BUSINESS_CAT);
-  const prevPersonalTxs = prevSpendingTxs.filter((t) => !t.isCredit && !t.shared && t.category !== BUSINESS_CAT);
-  const prevMyTotal = prevPersonalTxs.reduce((s, t) => s + t.amount, 0) - prevCreditTxs.reduce((s, t) => s + t.amount, 0) + prevSharedTxs.reduce((s, t) => s + t.amount, 0) * 0.5;
+  const prevPersonalTxs = prevSpendingTxs.filter((t) => !t.shared && t.category !== BUSINESS_CAT);
+  const prevMyTotal = prevPersonalTxs.reduce((s, t) => s + t.amount, 0) + prevSharedTxs.reduce((s, t) => s + t.amount, 0) * 0.5;
   const prevBusinessTotal = prevBusinessTxs.reduce((s, t) => s + t.amount, 0);
   const curTotal = myTotal;
   const prevTotal = prevMyTotal;
@@ -13517,19 +13523,26 @@ function ExpenseTracker() {
   ).sort((a, b) => b.total - a.total);
   const normalizeSource = (src) => {
     if (!src) return "Wells Fargo";
-    if (src.toLowerCase().includes("wells")) return "Wells Fargo";
-    if (src.toLowerCase().includes("checking") || src.toLowerCase().includes("savings")) return "Wells Fargo";
     if (src.toLowerCase().includes("chase")) return "Chase";
     if (src.toLowerCase().includes("apple")) return "Apple Card";
+    if (src.toLowerCase().includes("wells") || src.toLowerCase().includes("checking") || src.toLowerCase().includes("savings")) {
+      if (src.includes("\xB7\xB7\xB7") || src.includes("(")) return src;
+      return "Wells Fargo";
+    }
     return src;
   };
-  const SOURCE_PRIORITY = ["wells fargo", "apple", "chase", "cuban palms"];
+  const isWellsFargo = (src) => !!(src && (src.toLowerCase().includes("wells") || src.toLowerCase().includes("checking") || src.toLowerCase().includes("savings")));
   const allSources = [...new Set(transactions.map((t) => normalizeSource(t.source)).filter(Boolean))].sort((a, b) => {
-    const ai = SOURCE_PRIORITY.findIndex((p) => a.toLowerCase().includes(p));
-    const bi = SOURCE_PRIORITY.findIndex((p) => b.toLowerCase().includes(p));
-    const ar = ai === -1 ? 99 : ai;
-    const br = bi === -1 ? 99 : bi;
-    return ar !== br ? ar - br : a.localeCompare(b);
+    const aWF = isWellsFargo(a), bWF = isWellsFargo(b);
+    const aApple = a.toLowerCase().includes("apple"), bApple = b.toLowerCase().includes("apple");
+    const aChase = a.toLowerCase().includes("chase"), bChase = b.toLowerCase().includes("chase");
+    if (aWF && !bWF) return -1;
+    if (!aWF && bWF) return 1;
+    if (aApple && !bApple) return -1;
+    if (!aApple && bApple) return 1;
+    if (aChase && !bChase) return -1;
+    if (!aChase && bChase) return 1;
+    return a.localeCompare(b);
   });
   const curMonthDate = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
   const periodLabel = () => {
@@ -13866,9 +13879,13 @@ function ExpenseTracker() {
     },
     label
   )))), period === "month" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setMonthOffset((o) => o - 1), style: { background: "none", border: "none", color: T.text3, fontSize: 15, cursor: "pointer", padding: "0 4px", lineHeight: 1 } }, "\u2039"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 500, color: T.text, whiteSpace: "nowrap" } }, fmtMonth(curMonthDate)), /* @__PURE__ */ React.createElement("button", { onClick: () => setMonthOffset((o) => Math.min(o + 1, 0)), style: { background: "none", border: "none", color: monthOffset < 0 ? T.text3 : T.text4, fontSize: 15, cursor: monthOffset < 0 ? "pointer" : "default", padding: "0 4px", lineHeight: 1 } }, "\u203A")), period === "custom" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, flex: 1 } }, /* @__PURE__ */ React.createElement("input", { type: "date", value: customStart, onChange: (e) => setCustomStart(e.target.value), style: { fontSize: 11, padding: "4px 8px", flex: 1, borderRadius: 7 } }), /* @__PURE__ */ React.createElement("span", { style: { color: T.text3, fontSize: 12 } }, "\u2192"), /* @__PURE__ */ React.createElement("input", { type: "date", value: customEnd, onChange: (e) => setCustomEnd(e.target.value), style: { fontSize: 11, padding: "4px 8px", flex: 1, borderRadius: 7 } })))), /* @__PURE__ */ React.createElement("div", { style: { background: "#1C1C1E", position: "sticky", top: 0, zIndex: 89, padding: "8px 16px", display: "flex", alignItems: "center", gap: 0, overflowX: "auto", WebkitOverflowScrolling: "touch", width: "100%" } }, /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0, paddingRight: 14, borderRight: "1px solid rgba(255,255,255,.15)", marginRight: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: "rgba(255,255,255,.5)", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".08em" } }, "My Total"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, color: "#fff", letterSpacing: "-.3px" } }, "$", fmt$(myTotal))), allSources.map((src) => {
+    var _a;
     const srcMy = personalTxs.filter((t) => normalizeSource(t.source) === src && t.category !== BUSINESS_CAT).reduce((s, t) => s + t.amount, 0) + sharedTxs.filter((t) => normalizeSource(t.source) === src).reduce((s, t) => s + t.amount, 0) * 0.5;
     if (srcMy === 0) return null;
-    const shortSrc = src.split(" ")[0];
+    let shortSrc = src;
+    if (src.includes("\xB7\xB7\xB7")) shortSrc = `\xB7\xB7\xB7${src.split("\xB7\xB7\xB7")[1]}`;
+    else if (src.includes("(")) shortSrc = ((_a = src.match(/\(([^)]+)\)/)) == null ? void 0 : _a[1]) || src.split(" ")[0];
+    else shortSrc = src.split(" ")[0];
     return /* @__PURE__ */ React.createElement("div", { key: src, style: { flexShrink: 0, paddingRight: 14, borderRight: "1px solid rgba(255,255,255,.15)", marginRight: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: "rgba(255,255,255,.45)", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".06em", whiteSpace: "nowrap" } }, shortSrc), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,.9)" } }, "$", fmt$(srcMy)));
   }).filter(Boolean), businessTotal > 0 && /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: "rgba(255,255,255,.45)", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".06em" } }, "Cuban Palms"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,.7)" } }, "$", fmt$(businessTotal)))), /* @__PURE__ */ React.createElement(TabSwipe, { view, setView }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, padding: "18px 24px", width: "100%", maxWidth: view === "vendors" ? 820 : 1080 } }, view === "dashboard" && /* @__PURE__ */ React.createElement("div", null, (() => {
     const EXCLUDED = /* @__PURE__ */ new Set(["Transfer", "Cuban Palms", "Credit"]);
@@ -14719,5 +14736,4 @@ function ExpenseTracker() {
 </script>
   <script>(function(){try{var c=document.getElementById('root');c.innerHTML='';ReactDOM.createRoot(c).render(React.createElement(ExpenseTracker));}catch(e){var b=document.getElementById('error-banner');b.style.display='block';b.textContent='Error: '+e.message+'\n'+(e.stack||'');}})();</script>
   <script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>
-</body>
-</html>
+</body></html>
