@@ -1,13 +1,4 @@
-<!DOCTYPE html><html lang="en"><head>
-  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-  <meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-status-bar-style" content="default"/>
-  <meta name="apple-mobile-web-app-title" content="Ledger"/><meta name="theme-color" content="#F2F2F7"/>
-  <title>Ledger</title>
-  <style>html,body{margin:0;padding:0;height:100%;background:#F2F2F7;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);}body{overscroll-behavior-y:none;-webkit-font-smoothing:antialiased;}#root{min-height:100vh;}#error-banner{display:none;position:fixed;top:0;left:0;right:0;padding:12px 16px;background:#FF3B30;color:#fff;font-family:monospace;font-size:11px;z-index:9999;white-space:pre-wrap;word-break:break-all;max-height:50vh;overflow:auto;}</style>
-</head><body>
-  <div id="error-banner"></div><div id="root"></div>
-  <script>window.onerror=function(msg,src,line,col,err){var b=document.getElementById('error-banner');b.style.display='block';b.textContent='Error: '+msg+'\n'+(err&&err.stack?err.stack:'');return true;};</script>
-  <script>(() => {
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-status-bar-style" content="default"/><meta name="apple-mobile-web-app-title" content="Ledger"/><meta name="theme-color" content="#F2F2F7"/><title>Ledger</title><style>html,body{margin:0;padding:0;height:100%;background:#F2F2F7;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);}body{overscroll-behavior-y:none;-webkit-font-smoothing:antialiased;}#root{min-height:100vh;}#error-banner{display:none;position:fixed;top:0;left:0;right:0;padding:12px 16px;background:#FF3B30;color:#fff;font-family:monospace;font-size:11px;z-index:9999;white-space:pre-wrap;word-break:break-all;max-height:50vh;overflow:auto;}</style></head><body><div id="error-banner"></div><div id="root"></div><script>window.onerror=function(msg,src,line,col,err){var b=document.getElementById('error-banner');b.style.display='block';b.textContent='Error: '+msg+'\n'+(err&&err.stack?err.stack:'');return true;};</script><script>(() => {
   var __getOwnPropNames = Object.getOwnPropertyNames;
   var __commonJS = (cb, mod) => function __require() {
     return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
@@ -13028,13 +13019,20 @@ function parseCSV(text, filename) {
   let lines = rawLines;
   let syntheticBank = "";
   let wfAccountOverride = "";
+  let wfIsBusinessAccount = false;
   if (isNewChaseFormat) {
     lines = rawLines.slice(1);
     syntheticBank = "Chase";
   } else if (isNewWFFormat) {
     const acctName = firstLine.replace(/"/g, "").trim();
     const acctNum = acctName.match(/[\-\s](\d+)$/);
-    wfAccountOverride = acctNum ? `Wells Fargo (${acctName})` : acctName || "Wells Fargo";
+    const isVR = /(^|[^a-z])vr([^a-z]|$)/i.test(filename || "") || /checking-2/i.test(acctName);
+    if (isVR) {
+      wfAccountOverride = "Wells Fargo (Pieretti VR \xB7\xB7\xB75409)";
+      wfIsBusinessAccount = true;
+    } else {
+      wfAccountOverride = acctNum ? `Wells Fargo (${acctName})` : acctName || "Wells Fargo";
+    }
     lines = rawLines.slice(1);
     syntheticBank = "Wells Fargo";
   } else if (wfHeaderless) {
@@ -13125,7 +13123,10 @@ function parseCSV(text, filename) {
       }
     }
     const description = (descKey ? row[descKey] : "") || cleaned.find((v) => v && v.length > 2 && isNaN(parseFloat(v.replace(/[$,]/g, "")))) || "Unknown";
-    const autoCategory = detectAutoCategory(description, memoKey ? row[memoKey] || "" : "");
+    let autoCategory = detectAutoCategory(description, memoKey ? row[memoKey] || "" : "");
+    if (wfIsBusinessAccount && autoCategory !== "Transfer") {
+      autoCategory = "Cuban Palms";
+    }
     let dateVal = dateKey ? row[dateKey] || "" : "";
     if (!dateVal) {
       dateVal = cleaned.find((v) => /\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/.test(v) || /\d{4}[\/\-]\d{2}[\/\-]\d{2}/.test(v)) || "";
@@ -14745,6 +14746,4 @@ function ExpenseTracker() {
     );
   })());
 }
-</script><script>(function(){try{var c=document.getElementById('root');c.innerHTML='';ReactDOM.createRoot(c).render(React.createElement(ExpenseTracker));}catch(e){var b=document.getElementById('error-banner');b.style.display='block';b.textContent='Error: '+e.message+'\n'+(e.stack||'');}})();</script>
-  <script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>
-</body></html>
+</script><script>(function(){try{var c=document.getElementById('root');c.innerHTML='';ReactDOM.createRoot(c).render(React.createElement(ExpenseTracker));}catch(e){var b=document.getElementById('error-banner');b.style.display='block';b.textContent='Error: '+e.message+'\n'+(e.stack||'');}})();</script><script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script></body></html>
