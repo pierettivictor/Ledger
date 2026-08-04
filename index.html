@@ -1,9 +1,7 @@
 <!DOCTYPE html><html lang="en"><head>
   <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-  <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
-  <meta name="apple-mobile-web-app-title" content="Ledger"/>
-  <meta name="theme-color" content="#F2F2F7"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta name="apple-mobile-web-app-title" content="Ledger"/><meta name="theme-color" content="#F2F2F7"/>
   <title>Ledger</title>
   <style>html,body{margin:0;padding:0;height:100%;background:#F2F2F7;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);}body{overscroll-behavior-y:none;-webkit-font-smoothing:antialiased;}#root{min-height:100vh;}#error-banner{display:none;position:fixed;top:0;left:0;right:0;padding:12px 16px;background:#FF3B30;color:#fff;font-family:monospace;font-size:11px;z-index:9999;white-space:pre-wrap;word-break:break-all;max-height:50vh;overflow:auto;}</style>
 </head><body>
@@ -12944,7 +12942,11 @@ const TRANSFER_PATTERNS = [
 const CUBAN_PALMS_PATTERNS = [
   /executive villas/i,
   /cuban palms/i,
-  /vacay home/i
+  /vacay home/i,
+  /my vacay/i,
+  /proprtypay/i,
+  /clickpay.*prop/i,
+  /property.*pay/i
 ];
 const CREDIT_PATTERNS = [
   /refund/i,
@@ -13041,8 +13043,7 @@ function parseCSV(text, filename) {
   const wfAccount = bank === "Wells Fargo" ? wfAccountOverride || extractWFAccount(filename || "", rawLines) : "";
   let dateKey, descKey, amtKey, memoKey;
   if (bank === "Wells Fargo") {
-    const isNewFormat = headers.includes("date") && headers.includes("description") && headers.includes("amount") && headers.includes("status");
-    if (isNewFormat) {
+    if (isNewWFFormat) {
       dateKey = "date";
       descKey = "description";
       amtKey = "amount";
@@ -14733,7 +14734,6 @@ function ExpenseTracker() {
     );
   })());
 }
-</script>
-  <script>(function(){try{var c=document.getElementById('root');c.innerHTML='';ReactDOM.createRoot(c).render(React.createElement(ExpenseTracker));}catch(e){var b=document.getElementById('error-banner');b.style.display='block';b.textContent='Error: '+e.message+'\n'+(e.stack||'');}})();</script>
+</script><script>(function(){try{var c=document.getElementById('root');c.innerHTML='';ReactDOM.createRoot(c).render(React.createElement(ExpenseTracker));}catch(e){var b=document.getElementById('error-banner');b.style.display='block';b.textContent='Error: '+e.message+'\n'+(e.stack||'');}})();</script>
   <script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}</script>
 </body></html>
