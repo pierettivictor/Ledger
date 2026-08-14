@@ -13831,7 +13831,7 @@ function ExpenseTracker() {
         @keyframes modalIn{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
         @keyframes slideUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
         @keyframes dropIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
-      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px 8px", display: "flex", alignItems: "center", gap: 4, justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, letterSpacing: "-.3px", flexShrink: 0 } }, "Ledger"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 0, flexShrink: 0 } }, ["dashboard", "categories", "transactions", "vendors", "records"].map((v) => /* @__PURE__ */ React.createElement(
+      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px 8px", display: "flex", alignItems: "center", gap: 4, justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, letterSpacing: "-.3px", flexShrink: 0 } }, "Ledger"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 0, flexShrink: 0 } }, ["dashboard", "timeline", "categories", "transactions", "vendors", "records"].map((v) => /* @__PURE__ */ React.createElement(
     "button",
     {
       key: v,
@@ -14001,7 +14001,94 @@ function ExpenseTracker() {
       padding: "7px 14px",
       borderBottom: i < arr.length - 1 ? `1px solid ${T.border}` : "none"
     } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: T.text2, fontWeight: 500 } }, label), sub && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4, marginLeft: 8 } }, sub)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, fontWeight: 600, color } }, "$", val)))));
-  })()), view === "records" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 600, color: T.text, marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", null, "Import Records"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4 } }, importLog.length, " upload", importLog.length !== 1 ? "s" : "")), importLog.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 20px", color: T.text4, fontSize: 13 } }, "No imports yet."), importLog.map((entry, i) => {
+  })()), view === "timeline" && (() => {
+    const today = /* @__PURE__ */ new Date();
+    const todayDay = today.getDate();
+    const curY = today.getFullYear(), curM = today.getMonth();
+    const daysInMonth = new Date(curY, curM + 1, 0).getDate();
+    const daysLeft = daysInMonth - todayDay;
+    const LOOKBACK = 12;
+    const histStart = new Date(curY, curM - LOOKBACK, 1);
+    const histEnd = new Date(curY, curM, 0, 23, 59, 59, 999);
+    const eligible = (t) => t.category !== "Transfer" && t.category !== BUSINESS_CAT && !t.isCredit;
+    const share = (t) => t.shared ? t.amount * 0.5 : t.amount;
+    const hist = transactions.filter((t) => {
+      if (!eligible(t)) return false;
+      const d = parseDateStr(t.date);
+      return d && d >= histStart && d <= histEnd;
+    });
+    const monthKey = (d) => `${d.getFullYear()}-${d.getMonth()}`;
+    const histMonths = new Set(hist.map((t) => monthKey(parseDateStr(t.date))));
+    const nHistMonths = histMonths.size;
+    const vMap = {};
+    hist.forEach((t) => {
+      const d = parseDateStr(t.date);
+      const key = t.description.trim().toLowerCase();
+      if (!vMap[key]) vMap[key] = { name: t.description.trim(), category: t.category || "Uncategorized", months: {}, shared: t.shared };
+      const mk = monthKey(d);
+      if (!vMap[key].months[mk]) vMap[key].months[mk] = { total: 0, days: [] };
+      vMap[key].months[mk].total += share(t);
+      vMap[key].months[mk].days.push(d.getDate());
+    });
+    const MIN_RATIO = 0.5;
+    const recurring = Object.values(vMap).map((v) => {
+      const mks = Object.keys(v.months);
+      const n = mks.length;
+      const avgAmt = mks.reduce((s, k) => s + v.months[k].total, 0) / n;
+      const days = mks.flatMap((k) => v.months[k].days).sort((a, b) => a - b);
+      const medDay = days[Math.floor(days.length / 2)];
+      const spread = days[days.length - 1] - days[0];
+      const txPerMonth = days.length / n;
+      return { ...v, n, avgAmt, medDay, spread, txPerMonth };
+    }).filter(
+      (v) => nHistMonths > 0 && v.n / nHistMonths >= MIN_RATIO && v.txPerMonth < 3 && v.spread <= 12
+    ).sort((a, b) => a.medDay - b.medDay);
+    const passed = recurring.filter((v) => v.medDay < todayDay);
+    const remaining = recurring.filter((v) => v.medDay >= todayDay);
+    const billsPassed = passed.reduce((s, v) => s + v.avgAmt, 0);
+    const billsRemaining = remaining.reduce((s, v) => s + v.avgAmt, 0);
+    const cMap = {};
+    hist.forEach((t) => {
+      const cat = t.category || "Uncategorized";
+      const d = parseDateStr(t.date);
+      if (!cMap[cat]) cMap[cat] = { cat, months: {}, count: 0 };
+      const mk = monthKey(d);
+      if (!cMap[cat].months[mk]) cMap[cat].months[mk] = 0;
+      cMap[cat].months[mk] += share(t);
+      cMap[cat].count++;
+    });
+    const recurringCats = new Set(recurring.map((v) => v.category));
+    const variable = Object.values(cMap).map((c) => {
+      const mks = Object.keys(c.months);
+      const totals = mks.map((k) => c.months[k]).sort((a, b) => a - b);
+      const avg = totals.reduce((s, x) => s + x, 0) / mks.length;
+      return {
+        cat: c.cat,
+        avg,
+        n: mks.length,
+        lo: totals[0],
+        hi: totals[totals.length - 1],
+        txPerMonth: c.count / mks.length
+      };
+    }).filter((c) => c.txPerMonth >= 3 && c.n / Math.max(nHistMonths, 1) >= MIN_RATIO).sort((a, b) => b.avg - a.avg);
+    const varMonthly = variable.reduce((s, c) => s + c.avg, 0);
+    const varRemaining = varMonthly * (daysLeft / daysInMonth);
+    const varSoFar = varMonthly - varRemaining;
+    const totalRemaining = billsRemaining + varRemaining;
+    const typicalMonth = billsPassed + billsRemaining + varMonthly;
+    const actual = transactions.filter((t) => {
+      const d = parseDateStr(t.date);
+      return d && d.getFullYear() === curY && d.getMonth() === curM && eligible(t);
+    }).reduce((s, t) => s + share(t), 0);
+    const monthName = today.toLocaleString("en-US", { month: "long" });
+    const pctThrough = Math.round(todayDay / daysInMonth * 100);
+    if (nHistMonths === 0) return /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderRadius: 14, padding: "28px 20px", textAlign: "center", boxShadow: T.shadowSm } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: T.text3 } }, "No history yet."), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text4, marginTop: 5 } }, "Import a few months of statements and the forecast will build itself."));
+    const BillRow = ({ v, isPast }) => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, padding: "11px 16px", borderTop: `1px solid ${T.border}` } }, /* @__PURE__ */ React.createElement("div", { style: { width: 36, flexShrink: 0, textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, fontWeight: 700, color: isPast ? T.text4 : T.text, lineHeight: 1 } }, v.medDay), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 8, color: T.text4, textTransform: "uppercase" } }, v.spread <= 2 ? "exact" : `\xB1${Math.ceil(v.spread / 2)}d`)), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: isPast ? T.text3 : T.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, v.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.text4, marginTop: 1 } }, v.category, " \xB7 ", v.n, "/", nHistMonths, " mo", v.shared && /* @__PURE__ */ React.createElement("span", { style: { color: T.orange } }, " \xB7 \xBD"))), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: isPast ? T.text4 : T.text } }, "$", fmt$(v.avgAmt)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: T.text4 } }, isPast ? "typically by now" : "still ahead")));
+    return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderRadius: 14, boxShadow: T.shadow, border: `2px solid ${T.accent}`, overflow: "hidden", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "14px 16px 10px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.accent, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 2 } }, "Typically still ahead \xB7 rest of ", monthName), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 28, fontWeight: 700, color: T.text, letterSpacing: "-.5px" } }, "$", fmt$(totalRemaining)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text3, marginTop: 3 } }, "$", fmt$(billsRemaining), " in bills \xB7 $", fmt$(varRemaining), " variable \xB7 ", daysLeft, " days left"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 8, height: 5, background: T.border, borderRadius: 3, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { width: `${pctThrough}%`, height: "100%", background: T.accent } })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: T.text4, marginTop: 3 } }, "Day ", todayDay, " of ", daysInMonth, " \u2014 ", pctThrough, "% through the month")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", borderTop: `1px solid ${T.border}`, background: T.bgCard2 } }, [["Typical by now", billsPassed + varSoFar], ["Still ahead", totalRemaining], ["Typical month", typicalMonth]].map(([l, val], i) => /* @__PURE__ */ React.createElement("div", { key: l, style: { flex: 1, padding: "9px 12px", borderLeft: i ? `1px solid ${T.border}` : "none" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: T.text4, textTransform: "uppercase", letterSpacing: ".05em", whiteSpace: "nowrap" } }, l), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 700, color: i === 2 ? T.accent : T.text } }, "$", fmt$(val))))), actual > 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 16px", borderTop: `1px solid ${T.border}`, fontSize: 10, color: T.text3 } }, "Actually spent this month so far: ", /* @__PURE__ */ React.createElement("b", { style: { color: T.text } }, "$", fmt$(actual)), " \u2014 ", actual > billsPassed + varSoFar ? /* @__PURE__ */ React.createElement("span", { style: { color: T.orange } }, "$", fmt$(actual - (billsPassed + varSoFar)), " above typical pace") : /* @__PURE__ */ React.createElement("span", { style: { color: T.green } }, "$", fmt$(billsPassed + varSoFar - actual), " below typical pace"))), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderRadius: 14, boxShadow: T.shadowSm, overflow: "hidden", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 16px", fontSize: 11, fontWeight: 700, color: T.text2, textTransform: "uppercase", letterSpacing: ".08em" } }, "Bills still ahead \u2014 $", fmt$(billsRemaining)), remaining.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "14px 16px", borderTop: `1px solid ${T.border}`, fontSize: 12, color: T.text3 } }, "No recurring bills left after the ", todayDay, "th.") : remaining.map((v) => /* @__PURE__ */ React.createElement(BillRow, { key: v.name, v, isPast: false }))), variable.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderRadius: 14, boxShadow: T.shadowSm, overflow: "hidden", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 16px", fontSize: 11, fontWeight: 700, color: T.orange, textTransform: "uppercase", letterSpacing: ".08em" } }, "Variable \u2014 $", fmt$(varRemaining), " left of $", fmt$(varMonthly)), variable.map((c) => {
+      const left = c.avg * (daysLeft / daysInMonth);
+      return /* @__PURE__ */ React.createElement("div", { key: c.cat, style: { padding: "11px 16px", borderTop: `1px solid ${T.border}` } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, fontSize: 13, fontWeight: 600, color: T.text } }, c.cat), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: T.text } }, "$", fmt$(left))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.text4, marginTop: 2 } }, "~$", fmt$(c.avg), "/mo \xB7 ", c.txPerMonth.toFixed(1), " tx/mo \xB7 range $", fmt$(c.lo), "\u2013$", fmt$(c.hi)));
+    })), passed.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderRadius: 14, boxShadow: T.shadowSm, overflow: "hidden", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 16px", fontSize: 11, fontWeight: 700, color: T.text3, textTransform: "uppercase", letterSpacing: ".08em" } }, "Typically billed before the ", todayDay, "th \u2014 $", fmt$(billsPassed)), passed.map((v) => /* @__PURE__ */ React.createElement(BillRow, { key: v.name, v, isPast: true }))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.text4, padding: "0 4px 8px", lineHeight: 1.5 } }, "Built from ", nHistMonths, " month", nHistMonths === 1 ? "" : "s", " of history, not from this month's imports \u2014 the forecast works before you've uploaded anything for ", monthName, ". Bills are vendors that recur on a consistent date; variable categories are prorated by days remaining. Transfers and Cuban Palms excluded."));
+  })(), view === "records" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 600, color: T.text, marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", null, "Import Records"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4 } }, importLog.length, " upload", importLog.length !== 1 ? "s" : "")), importLog.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 20px", color: T.text4, fontSize: 13 } }, "No imports yet."), importLog.map((entry, i) => {
     const d = new Date(entry.timestamp);
     const dateStr = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     const timeStr = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
