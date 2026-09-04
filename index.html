@@ -4,9 +4,9 @@
     return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
   };
 
-  // home/claude/.npm-global/lib/node_modules/react/cjs/react.production.js
+  // .npm-global/lib/node_modules/react/cjs/react.production.js
   var require_react_production = __commonJS({
-    "home/claude/.npm-global/lib/node_modules/react/cjs/react.production.js"(exports) {
+    ".npm-global/lib/node_modules/react/cjs/react.production.js"(exports) {
       "use strict";
       var REACT_ELEMENT_TYPE = /* @__PURE__ */ Symbol.for("react.transitional.element");
       var REACT_PORTAL_TYPE = /* @__PURE__ */ Symbol.for("react.portal");
@@ -445,9 +445,9 @@
     }
   });
 
-  // home/claude/.npm-global/lib/node_modules/react/index.js
+  // .npm-global/lib/node_modules/react/index.js
   var require_react = __commonJS({
-    "home/claude/.npm-global/lib/node_modules/react/index.js"(exports, module) {
+    ".npm-global/lib/node_modules/react/index.js"(exports, module) {
       "use strict";
       if (true) {
         module.exports = require_react_production();
@@ -457,9 +457,9 @@
     }
   });
 
-  // home/claude/.npm-global/lib/node_modules/react-dom/node_modules/scheduler/cjs/scheduler.production.js
+  // .npm-global/lib/node_modules/react-dom/node_modules/scheduler/cjs/scheduler.production.js
   var require_scheduler_production = __commonJS({
-    "home/claude/.npm-global/lib/node_modules/react-dom/node_modules/scheduler/cjs/scheduler.production.js"(exports) {
+    ".npm-global/lib/node_modules/react-dom/node_modules/scheduler/cjs/scheduler.production.js"(exports) {
       "use strict";
       function push(heap, node) {
         var index = heap.length;
@@ -730,9 +730,9 @@
     }
   });
 
-  // home/claude/.npm-global/lib/node_modules/react-dom/node_modules/scheduler/index.js
+  // .npm-global/lib/node_modules/react-dom/node_modules/scheduler/index.js
   var require_scheduler = __commonJS({
-    "home/claude/.npm-global/lib/node_modules/react-dom/node_modules/scheduler/index.js"(exports, module) {
+    ".npm-global/lib/node_modules/react-dom/node_modules/scheduler/index.js"(exports, module) {
       "use strict";
       if (true) {
         module.exports = require_scheduler_production();
@@ -742,9 +742,9 @@
     }
   });
 
-  // home/claude/.npm-global/lib/node_modules/react-dom/cjs/react-dom.production.js
+  // .npm-global/lib/node_modules/react-dom/cjs/react-dom.production.js
   var require_react_dom_production = __commonJS({
-    "home/claude/.npm-global/lib/node_modules/react-dom/cjs/react-dom.production.js"(exports) {
+    ".npm-global/lib/node_modules/react-dom/cjs/react-dom.production.js"(exports) {
       "use strict";
       var React2 = require_react();
       function formatProdErrorMessage(code) {
@@ -891,9 +891,9 @@
     }
   });
 
-  // home/claude/.npm-global/lib/node_modules/react-dom/index.js
+  // .npm-global/lib/node_modules/react-dom/index.js
   var require_react_dom = __commonJS({
-    "home/claude/.npm-global/lib/node_modules/react-dom/index.js"(exports, module) {
+    ".npm-global/lib/node_modules/react-dom/index.js"(exports, module) {
       "use strict";
       function checkDCE() {
         if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ === "undefined" || typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.checkDCE !== "function") {
@@ -917,9 +917,9 @@
     }
   });
 
-  // home/claude/.npm-global/lib/node_modules/react-dom/cjs/react-dom-client.production.js
+  // .npm-global/lib/node_modules/react-dom/cjs/react-dom-client.production.js
   var require_react_dom_client_production = __commonJS({
-    "home/claude/.npm-global/lib/node_modules/react-dom/cjs/react-dom-client.production.js"(exports) {
+    ".npm-global/lib/node_modules/react-dom/cjs/react-dom-client.production.js"(exports) {
       "use strict";
       var Scheduler = require_scheduler();
       var React2 = require_react();
@@ -12658,9 +12658,9 @@
     }
   });
 
-  // home/claude/.npm-global/lib/node_modules/react-dom/client.js
+  // .npm-global/lib/node_modules/react-dom/client.js
   var require_client = __commonJS({
-    "home/claude/.npm-global/lib/node_modules/react-dom/client.js"(exports, module) {
+    ".npm-global/lib/node_modules/react-dom/client.js"(exports, module) {
       "use strict";
       function checkDCE() {
         if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ === "undefined" || typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.checkDCE !== "function") {
@@ -12684,7 +12684,7 @@
     }
   });
 
-  // tmp/react-entry.js
+  // ../../tmp/react-entry.js
   var React = require_react();
   var ReactDOM = require_client();
   window.React = React;
@@ -12922,6 +12922,14 @@ const TRANSFER_PATTERNS = [
   /external transfer/i,
   /account transfer/i,
   /bank transfer/i,
+  /save as you go/i,
+  // WF automatic savings sweep
+  /crd epay/i,
+  // WF -> Chase credit card payment
+  /gsbank payment/i,
+  // WF -> Apple Card payment
+  /venmo\s+cashout/i,
+  // Venmo withdrawal into checking
   /zelle to /i,
   // only outgoing Zelle = transfer
   /payment thank you/i,
@@ -14088,32 +14096,55 @@ function ExpenseTracker() {
       const left = c.avg * (daysLeft / daysInMonth);
       return /* @__PURE__ */ React.createElement("div", { key: c.cat, style: { padding: "11px 16px", borderTop: `1px solid ${T.border}` } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, fontSize: 13, fontWeight: 600, color: T.text } }, c.cat), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: T.text } }, "$", fmt$(left))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.text4, marginTop: 2 } }, "~$", fmt$(c.avg), "/mo \xB7 ", c.txPerMonth.toFixed(1), " tx/mo \xB7 range $", fmt$(c.lo), "\u2013$", fmt$(c.hi)));
     })), passed.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderRadius: 14, boxShadow: T.shadowSm, overflow: "hidden", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 16px", fontSize: 11, fontWeight: 700, color: T.text3, textTransform: "uppercase", letterSpacing: ".08em" } }, "Typically billed before the ", todayDay, "th \u2014 $", fmt$(billsPassed)), passed.map((v) => /* @__PURE__ */ React.createElement(BillRow, { key: v.name, v, isPast: true }))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.text4, padding: "0 4px 8px", lineHeight: 1.5 } }, "Built from ", nHistMonths, " month", nHistMonths === 1 ? "" : "s", " of history, not from this month's imports \u2014 the forecast works before you've uploaded anything for ", monthName, ". Bills are vendors that recur on a consistent date; variable categories are prorated by days remaining. Transfers and Cuban Palms excluded."));
-  })(), view === "records" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 600, color: T.text, marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", null, "Import Records"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4 } }, importLog.length, " upload", importLog.length !== 1 ? "s" : "")), importLog.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 20px", color: T.text4, fontSize: 13 } }, "No imports yet."), importLog.map((entry, i) => {
-    const d = new Date(entry.timestamp);
-    const dateStr = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-    const timeStr = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
-    return /* @__PURE__ */ React.createElement("div", { key: entry.id, style: { background: T.bgCard, borderRadius: 12, padding: "14px 16px", marginBottom: 10, border: `1px solid ${T.border}` } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: T.text } }, dateStr, " \xB7 ", timeStr), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text4, marginTop: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { color: T.accent, fontWeight: 600 } }, entry.imported, " imported"), entry.skipped > 0 && /* @__PURE__ */ React.createElement("span", { style: { marginLeft: 8, color: T.text3 } }, entry.skipped, " duplicates skipped"))), /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        onClick: () => setImportLog((prev) => prev.filter((e) => e.id !== entry.id)),
-        style: { background: "none", border: "none", color: T.text4, fontSize: 16, cursor: "pointer", padding: "0 4px", lineHeight: 1 },
-        onMouseEnter: (e) => e.currentTarget.style.color = T.danger,
-        onMouseLeave: (e) => e.currentTarget.style.color = T.text4
-      },
-      "\xD7"
-    )), entry.files && entry.files.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 5 } }, entry.files.map((f) => /* @__PURE__ */ React.createElement("span", { key: f, style: {
-      fontSize: 11,
-      color: T.text3,
-      background: T.bg,
-      border: `1px solid ${T.border}`,
-      borderRadius: 8,
-      padding: "2px 8px",
-      maxWidth: 220,
-      overflow: "hidden",
-      textOverflow: "ellipsis",
-      whiteSpace: "nowrap"
-    } }, "\u{1F4C4} ", f))));
-  })), view === "vendors" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 14, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(
+  })(), view === "records" && (() => {
+    const bySrc = {};
+    rangeTxs.forEach((t) => {
+      const s = normalizeSource(t.source || "Unknown");
+      if (!bySrc[s]) bySrc[s] = { src: s, personal: 0, shared: 0, transfer: 0, cuban: 0, credit: 0, n: 0 };
+      const b = bySrc[s];
+      b.n++;
+      if (t.isCredit) b.credit += t.amount;
+      else if (t.category === "Transfer") b.transfer += t.amount;
+      else if (t.category === BUSINESS_CAT) b.cuban += t.amount;
+      else if (t.shared) b.shared += t.amount;
+      else b.personal += t.amount;
+    });
+    const srcs = Object.values(bySrc).sort((a, b) => b.personal + b.shared - (a.personal + a.shared));
+    const G = { personal: 0, shared: 0, transfer: 0, cuban: 0, credit: 0, n: 0 };
+    srcs.forEach((b) => {
+      ["personal", "shared", "transfer", "cuban", "credit", "n"].forEach((k) => G[k] += b[k]);
+    });
+    const counted = G.personal + G.shared * 0.5;
+    return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderRadius: 14, boxShadow: T.shadowSm, overflow: "hidden", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 16px 8px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: T.text2, textTransform: "uppercase", letterSpacing: ".08em" } }, "Audit \u2014 where the money went"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.text4, marginTop: 2 } }, G.n, " transactions in this period \xB7 $", fmt$(counted), " counted as your expenses")), srcs.map((b) => {
+      const raw = b.personal + b.shared + b.transfer + b.cuban + b.credit;
+      return /* @__PURE__ */ React.createElement("div", { key: b.src, style: { padding: "10px 16px", borderTop: `1px solid ${T.border}` } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, fontSize: 13, fontWeight: 600, color: T.text } }, b.src), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: T.text } }, "$", fmt$(b.personal + b.shared * 0.5))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.text4, marginTop: 3, lineHeight: 1.6 } }, b.n, " tx \xB7 raw $", fmt$(raw), /* @__PURE__ */ React.createElement("br", null), b.personal > 0 && /* @__PURE__ */ React.createElement("span", null, "personal $", fmt$(b.personal), " \xB7 "), b.shared > 0 && /* @__PURE__ */ React.createElement("span", { style: { color: T.orange } }, "shared $", fmt$(b.shared), " \u2192 $", fmt$(b.shared * 0.5), " \xB7 "), b.transfer > 0 && /* @__PURE__ */ React.createElement("span", null, "transfer $", fmt$(b.transfer), " (excl) \xB7 "), b.cuban > 0 && /* @__PURE__ */ React.createElement("span", { style: { color: T.green } }, "cuban $", fmt$(b.cuban), " (excl) \xB7 "), b.credit > 0 && /* @__PURE__ */ React.createElement("span", null, "credits $", fmt$(b.credit), " (excl)")));
+    }), srcs.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "14px 16px", borderTop: `1px solid ${T.border}`, fontSize: 12, color: T.text3 } }, "No transactions in this period."), /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 16px", borderTop: `2px solid ${T.border}`, background: T.bgCard2 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.text4, lineHeight: 1.7 } }, "Personal ", /* @__PURE__ */ React.createElement("b", { style: { color: T.text } }, "$", fmt$(G.personal)), " + half of shared ", /* @__PURE__ */ React.createElement("b", { style: { color: T.orange } }, "$", fmt$(G.shared * 0.5)), " = ", /* @__PURE__ */ React.createElement("b", { style: { color: T.accent } }, "$", fmt$(counted)), /* @__PURE__ */ React.createElement("br", null), "Excluded: transfers $", fmt$(G.transfer), " \xB7 Cuban Palms $", fmt$(G.cuban), " \xB7 credits $", fmt$(G.credit)))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 600, color: T.text, marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("span", null, "Import Records"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4 } }, importLog.length, " upload", importLog.length !== 1 ? "s" : "")), importLog.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 20px", color: T.text4, fontSize: 13 } }, "No imports yet."), importLog.map((entry, i) => {
+      const d = new Date(entry.timestamp);
+      const dateStr = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      const timeStr = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+      return /* @__PURE__ */ React.createElement("div", { key: entry.id, style: { background: T.bgCard, borderRadius: 12, padding: "14px 16px", marginBottom: 10, border: `1px solid ${T.border}` } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: T.text } }, dateStr, " \xB7 ", timeStr), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text4, marginTop: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { color: T.accent, fontWeight: 600 } }, entry.imported, " imported"), entry.skipped > 0 && /* @__PURE__ */ React.createElement("span", { style: { marginLeft: 8, color: T.text3 } }, entry.skipped, " duplicates skipped"))), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          onClick: () => setImportLog((prev) => prev.filter((e) => e.id !== entry.id)),
+          style: { background: "none", border: "none", color: T.text4, fontSize: 16, cursor: "pointer", padding: "0 4px", lineHeight: 1 },
+          onMouseEnter: (e) => e.currentTarget.style.color = T.danger,
+          onMouseLeave: (e) => e.currentTarget.style.color = T.text4
+        },
+        "\xD7"
+      )), entry.files && entry.files.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 5 } }, entry.files.map((f) => /* @__PURE__ */ React.createElement("span", { key: f, style: {
+        fontSize: 11,
+        color: T.text3,
+        background: T.bg,
+        border: `1px solid ${T.border}`,
+        borderRadius: 8,
+        padding: "2px 8px",
+        maxWidth: 220,
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap"
+      } }, "\u{1F4C4} ", f))));
+    })));
+  })(), view === "vendors" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 14, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(
     "button",
     {
       className: `tab-btn ${vendorTab === "queue" ? "active" : ""}`,
