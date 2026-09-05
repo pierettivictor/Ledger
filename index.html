@@ -13034,7 +13034,16 @@ function parseCSV(text, filename) {
   } else if (isNewWFFormat) {
     const acctName = firstLine.replace(/"/g, "").trim();
     const acctNum = acctName.match(/[\-\s](\d+)$/);
-    const isVR = /(^|[^a-z])vr([^a-z]|$)/i.test(filename || "") || /checking-2/i.test(acctName);
+    const bodyText = rawLines.slice(1).join(" ");
+    const vrHits = [
+      /clickpay|proprtypay/i,
+      /vrbo/i,
+      /vacay home/i,
+      /dukeenergy|duke energy/i,
+      /toho/i,
+      /executive villas/i
+    ].filter((re) => re.test(bodyText)).length;
+    const isVR = vrHits >= 2 || /(^|[^a-z])vr([^a-z]|$)/i.test(filename || "") || /5409/.test(acctName);
     if (isVR) {
       wfAccountOverride = "Wells Fargo (Pieretti VR \xB7\xB7\xB75409)";
       wfIsBusinessAccount = true;
