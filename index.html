@@ -13022,7 +13022,10 @@ function parseCSV(text, filename) {
   const firstLine = rawLines[0].trim();
   const secondLine = rawLines[1] ? rawLines[1].trim().toLowerCase() : "";
   const isNewChaseFormat = !/^"?\d{2}\/\d{2}\/\d{4}"?,/.test(firstLine) && secondLine.includes("transaction date") && secondLine.includes("post date");
-  const isNewWFFormat = !isNewChaseFormat && !/^"?\d{2}\/\d{2}\/\d{4}"?,/.test(firstLine) && secondLine.includes("date") && secondLine.includes("description") && secondLine.includes("amount") && secondLine.includes("status");
+  const wfHeaderLine = (line) => line.includes("date") && line.includes("description") && line.includes("amount") && line.includes("status");
+  const wfHeadersOnRow2 = !isNewChaseFormat && !/^"?\d{1,2}\/\d{1,2}\/\d{2,4}"?,/.test(firstLine) && wfHeaderLine(secondLine);
+  const wfHeadersOnRow1 = !isNewChaseFormat && wfHeaderLine(firstLine);
+  const isNewWFFormat = wfHeadersOnRow1 || wfHeadersOnRow2;
   const wfHeaderless = !isNewWFFormat && !isNewChaseFormat && /^"?\d{2}\/\d{2}\/\d{4}"?,/.test(firstLine);
   let lines = rawLines;
   let syntheticBank = "";
@@ -13032,8 +13035,7 @@ function parseCSV(text, filename) {
     lines = rawLines.slice(1);
     syntheticBank = "Chase";
   } else if (isNewWFFormat) {
-    const acctName = firstLine.replace(/"/g, "").trim();
-    const acctNum = acctName.match(/[\-\s](\d+)$/);
+    const acctName = wfHeadersOnRow2 ? firstLine.replace(/"/g, "").trim() : (filename || "").replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").trim();
     const bodyText = rawLines.slice(1).join(" ");
     const vrHits = [
       /clickpay|proprtypay/i,
@@ -13048,9 +13050,9 @@ function parseCSV(text, filename) {
       wfAccountOverride = "Wells Fargo (Pieretti VR \xB7\xB7\xB75409)";
       wfIsBusinessAccount = true;
     } else {
-      wfAccountOverride = acctNum ? `Wells Fargo (${acctName})` : acctName || "Wells Fargo";
+      wfAccountOverride = acctName ? `Wells Fargo (${acctName})` : "Wells Fargo";
     }
-    lines = rawLines.slice(1);
+    if (wfHeadersOnRow2) lines = rawLines.slice(1);
     syntheticBank = "Wells Fargo";
   } else if (wfHeaderless) {
     lines = ["Date,Amount,col2,col3,Description", ...rawLines];
@@ -14569,7 +14571,7 @@ function ExpenseTracker() {
     return sourceOrder.map((src) => {
       const txs = grouped[src];
       const collapsed = collapsedCards.has(src);
-      const srcDisplayTotal = txs.filter((t) => t.category !== BUSINESS_CAT).reduce((s, t) => s + t.amount, 0);
+      const srcDisplayTotal = txs.filter((t) => t.category !== BUSINESS_CAT && t.category !== "Transfer" && !t.isCredit).reduce((s, t) => s + (t.shared ? t.amount * 0.5 : t.amount), 0);
       const allShared = txs.length > 0 && txs.every((t) => t.shared);
       return /* @__PURE__ */ React.createElement("div", { key: src }, /* @__PURE__ */ React.createElement("div", { style: {
         display: "flex",
