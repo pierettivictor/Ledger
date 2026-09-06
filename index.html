@@ -13531,6 +13531,9 @@ function ExpenseTracker() {
   const sharedMyTotal = sharedFullTotal * 0.5;
   const personalTotal = personalTxs.reduce((s, t) => s + t.amount, 0);
   const myTotal = personalTotal + sharedMyTotal;
+  const countsAsExpense = (t) => t.category !== "Transfer" && t.category !== BUSINESS_CAT && !t.isCredit;
+  const myShare = (t) => t.shared ? t.amount * 0.5 : t.amount;
+  const sumMyShare = (txs) => txs.filter(countsAsExpense).reduce((s, t) => s + myShare(t), 0);
   const prevBusinessTxs = prevSpendingTxs.filter((t) => t.category === BUSINESS_CAT);
   const prevSharedTxs = prevSpendingTxs.filter((t) => t.shared && t.category !== BUSINESS_CAT);
   const prevPersonalTxs = prevSpendingTxs.filter((t) => !t.shared && t.category !== BUSINESS_CAT);
@@ -13850,7 +13853,7 @@ function ExpenseTracker() {
         @keyframes modalIn{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
         @keyframes slideUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
         @keyframes dropIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
-      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px 8px", display: "flex", alignItems: "center", gap: 4, justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, letterSpacing: "-.3px", flexShrink: 0 } }, "Ledger"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 0, flexShrink: 0 } }, ["dashboard", "timeline", "categories", "transactions", "vendors", "records"].map((v) => /* @__PURE__ */ React.createElement(
+      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px 8px", display: "flex", alignItems: "center", gap: 4, justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, letterSpacing: "-.3px", flexShrink: 0 } }, "Ledger ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, fontWeight: 600, color: T.text4, letterSpacing: 0 } }, "v14")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 0, flexShrink: 0 } }, ["dashboard", "timeline", "categories", "transactions", "vendors", "records"].map((v) => /* @__PURE__ */ React.createElement(
     "button",
     {
       key: v,
@@ -14599,7 +14602,7 @@ function ExpenseTracker() {
     return sourceOrder.map((src) => {
       const txs = grouped[src];
       const collapsed = collapsedCards.has(src);
-      const srcDisplayTotal = txs.filter((t) => t.category !== BUSINESS_CAT && t.category !== "Transfer" && !t.isCredit).reduce((s, t) => s + (t.shared ? t.amount * 0.5 : t.amount), 0);
+      const srcDisplayTotal = sumMyShare(txs);
       const allShared = txs.length > 0 && txs.every((t) => t.shared);
       return /* @__PURE__ */ React.createElement("div", { key: src }, /* @__PURE__ */ React.createElement("div", { style: {
         display: "flex",
@@ -14630,121 +14633,126 @@ function ExpenseTracker() {
         "\xBD"
       ), /* @__PURE__ */ React.createElement("span", { onClick: () => toggleCard(src), style: { fontSize: 12, color: T.text4, marginLeft: 4, cursor: "pointer" } }, collapsed ? "\u25B8" : "\u25BE")), !collapsed && txs.map(renderTxRow));
     });
-  })())), view === "categories" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, marginBottom: 16, alignItems: "center" } }, /* @__PURE__ */ React.createElement("input", { placeholder: "New category name\u2026", value: newCat, onChange: (e) => setNewCat(e.target.value), onKeyDown: (e) => e.key === "Enter" && addCategory(), style: { flex: 1, maxWidth: 280 } }), /* @__PURE__ */ React.createElement("button", { className: "action-btn", onClick: addCategory }, "Add")), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 14, overflow: "hidden", boxShadow: T.shadow } }, categories.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: 32, textAlign: "center", color: T.text4, fontSize: 13 } }, "No categories yet."), [...categories].sort((a, b) => {
-    const totalA = rangeTxs.filter((t) => t.category === a).reduce((s, t) => s + t.amount, 0);
-    const totalB = rangeTxs.filter((t) => t.category === b).reduce((s, t) => s + t.amount, 0);
-    return totalB - totalA;
-  }).map((cat, i, arr) => {
-    const color = getCatColor(cat);
-    const catTxs = rangeTxs.filter((t) => t.category === cat);
-    const fullTotal = catTxs.reduce((s, t) => s + t.amount, 0);
-    const sharedAmt = catTxs.filter((t) => t.shared).reduce((s, t) => s + t.amount, 0);
-    const myTotal_cat = fullTotal - sharedAmt * 0.5;
-    const hasShared = sharedAmt > 0;
-    const months = new Set(catTxs.map((t) => {
-      var _a;
-      return (_a = t.date) == null ? void 0 : _a.slice(0, 7);
-    }).filter(Boolean));
-    const monthCount = Math.max(months.size, 1);
-    const monthlyAvg = fullTotal / monthCount;
-    const isExpanded = expandedCat === cat;
-    const vendorGroups = Object.values(
-      catTxs.reduce((acc, t) => {
-        const key = (t.description || "\u2014").trim().toLowerCase();
-        if (!acc[key]) acc[key] = { name: (t.description || "\u2014").trim(), key, txs: [], total: 0 };
-        acc[key].txs.push(t);
-        acc[key].total += t.amount;
-        return acc;
-      }, {})
-    ).sort((a, b) => b.total - a.total);
-    return /* @__PURE__ */ React.createElement("div", { key: cat, style: { borderBottom: i < arr.length - 1 ? `1px solid ${T.border}` : "none" } }, /* @__PURE__ */ React.createElement(
-      "div",
-      {
-        onClick: () => {
-          if (isExpanded) {
-            setExpandedCat(null);
-            setExpandedVendor(null);
-          } else setExpandedCat(cat);
-        },
-        style: { display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", cursor: "pointer", background: T.bgCard, transition: "background .1s" }
-      },
-      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 500, color: T.text } }, cat), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginTop: 2, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4 } }, catTxs.length, " tx \xB7 ", vendorGroups.length, " vendors", months.size > 1 ? ` \xB7 ~$${fmt$(monthlyAvg)}/mo` : ""), hasShared && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: T.orange, background: `${T.orange}15`, borderRadius: 6, padding: "1px 6px", fontWeight: 600 } }, "\xBD"), hasShared && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4 } }, "full $", fmt$(fullTotal)))),
-      /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: T.text } }, "$", fmt$(myTotal_cat))),
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 2, flexShrink: 0 }, onClick: (e) => e.stopPropagation() }, [["E", "essential", T.accent], ["D", "discretionary", T.orange], ["\u2014", null, T.text4]].map(([lbl, val, col]) => {
-        const active = catGroups[cat] === val || val === null && !catGroups[cat];
-        return /* @__PURE__ */ React.createElement(
-          "button",
-          {
-            key: lbl,
-            onClick: () => setCatGroups((prev) => ({ ...prev, [cat]: val })),
-            style: {
-              width: 22,
-              height: 20,
-              borderRadius: 5,
-              border: `1px solid ${active ? col : T.border}`,
-              background: active ? `${col}20` : "none",
-              color: active ? col : T.text4,
-              fontSize: 9,
-              fontWeight: 700,
-              fontFamily: "inherit",
-              cursor: "pointer"
-            }
-          },
-          lbl
-        );
-      })),
-      /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          onClick: (e) => {
-            e.stopPropagation();
-            toggleCategoryShared(cat);
-          },
-          style: {
-            fontSize: 10,
-            padding: "2px 7px",
-            borderRadius: 10,
-            border: `1px solid ${catTxs.every((t) => t.shared) && catTxs.length > 0 ? T.orange : T.border}`,
-            background: catTxs.every((t) => t.shared) && catTxs.length > 0 ? `${T.orange}20` : "none",
-            color: catTxs.every((t) => t.shared) && catTxs.length > 0 ? T.orange : T.text4,
-            fontWeight: 600,
-            cursor: "pointer",
-            fontFamily: "inherit",
-            flexShrink: 0
-          }
-        },
-        "\xBD"
-      ),
-      /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4, flexShrink: 0 } }, isExpanded ? "\u25BE" : "\u203A"),
-      /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          onClick: (e) => {
-            e.stopPropagation();
-            setConfirmDeleteCat({ name: cat, typed: "" });
-          },
-          style: { background: "none", border: "none", color: T.text4, fontSize: 14, padding: "2px 4px", cursor: "pointer", flexShrink: 0, lineHeight: 1 },
-          onMouseEnter: (e) => e.currentTarget.style.color = T.danger,
-          onMouseLeave: (e) => e.currentTarget.style.color = T.text4
-        },
-        "\xD7"
-      )
-    ), isExpanded && /* @__PURE__ */ React.createElement("div", { style: { borderTop: `1px solid ${color}33`, background: `${color}05` } }, vendorGroups.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 16px", fontSize: 13, color: T.text4, textAlign: "center" } }, "No transactions") : vendorGroups.map((vg, vi) => {
-      const vKey = cat + "|" + vg.key;
-      const vExpanded = expandedVendor === vKey;
-      const txsSorted = [...vg.txs].sort((a, b) => b.date.localeCompare(a.date));
-      return /* @__PURE__ */ React.createElement("div", { key: vg.key, style: { borderBottom: vi < vendorGroups.length - 1 ? `1px solid ${color}22` : "none" } }, /* @__PURE__ */ React.createElement(
+  })())), view === "categories" && (() => {
+    const catTotal = sumMyShare(rangeTxs);
+    const catRows = categories.map((c) => ({ cat: c, amt: sumMyShare(rangeTxs.filter((t) => t.category === c)) })).filter((r) => r.amt > 0).length;
+    const uncatAmt = sumMyShare(rangeTxs.filter((t) => !t.category));
+    return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderRadius: 14, boxShadow: T.shadow, border: `2px solid ${T.accent}`, padding: "14px 16px", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.accent, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 2 } }, "Total \u2014 my expenses"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 26, fontWeight: 700, color: T.text, letterSpacing: "-.5px" } }, "$", fmt$(catTotal)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text3, marginTop: 3 } }, catRows, " categories with spend", uncatAmt > 0 && /* @__PURE__ */ React.createElement("span", null, " \xB7 ", /* @__PURE__ */ React.createElement("b", { style: { color: T.text2 } }, "$", fmt$(uncatAmt)), " uncategorized")), Math.abs(catTotal - myTotal) > 0.01 && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.danger, marginTop: 4 } }, "Dashboard shows $", fmt$(myTotal), " \u2014 $", fmt$(Math.abs(catTotal - myTotal)), " difference"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.text4, marginTop: 5 } }, "Excludes transfers, credits, and Cuban Palms. Shared counted at half.")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, marginBottom: 16, alignItems: "center" } }, /* @__PURE__ */ React.createElement("input", { placeholder: "New category name\u2026", value: newCat, onChange: (e) => setNewCat(e.target.value), onKeyDown: (e) => e.key === "Enter" && addCategory(), style: { flex: 1, maxWidth: 280 } }), /* @__PURE__ */ React.createElement("button", { className: "action-btn", onClick: addCategory }, "Add")), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 14, overflow: "hidden", boxShadow: T.shadow } }, categories.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: 32, textAlign: "center", color: T.text4, fontSize: 13 } }, "No categories yet."), [...categories].sort((a, b) => {
+      const totalA = sumMyShare(rangeTxs.filter((t) => t.category === a));
+      const totalB = sumMyShare(rangeTxs.filter((t) => t.category === b));
+      return totalB - totalA;
+    }).map((cat, i, arr) => {
+      const color = getCatColor(cat);
+      const catTxs = rangeTxs.filter((t) => t.category === cat);
+      const fullTotal = catTxs.reduce((s, t) => s + t.amount, 0);
+      const sharedAmt = catTxs.filter((t) => t.shared).reduce((s, t) => s + t.amount, 0);
+      const myTotal_cat = fullTotal - sharedAmt * 0.5;
+      const hasShared = sharedAmt > 0;
+      const months = new Set(catTxs.map((t) => {
+        var _a;
+        return (_a = t.date) == null ? void 0 : _a.slice(0, 7);
+      }).filter(Boolean));
+      const monthCount = Math.max(months.size, 1);
+      const monthlyAvg = fullTotal / monthCount;
+      const isExpanded = expandedCat === cat;
+      const vendorGroups = Object.values(
+        catTxs.reduce((acc, t) => {
+          const key = (t.description || "\u2014").trim().toLowerCase();
+          if (!acc[key]) acc[key] = { name: (t.description || "\u2014").trim(), key, txs: [], total: 0 };
+          acc[key].txs.push(t);
+          acc[key].total += t.amount;
+          return acc;
+        }, {})
+      ).sort((a, b) => b.total - a.total);
+      return /* @__PURE__ */ React.createElement("div", { key: cat, style: { borderBottom: i < arr.length - 1 ? `1px solid ${T.border}` : "none" } }, /* @__PURE__ */ React.createElement(
         "div",
         {
-          onClick: () => setExpandedVendor(vExpanded ? null : vKey),
-          style: { display: "flex", alignItems: "center", gap: 10, padding: "10px 16px 10px 36px", cursor: "pointer", background: vExpanded ? `${color}12` : "transparent", transition: "background .12s" }
+          onClick: () => {
+            if (isExpanded) {
+              setExpandedCat(null);
+              setExpandedVendor(null);
+            } else setExpandedCat(cat);
+          },
+          style: { display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", cursor: "pointer", background: T.bgCard, transition: "background .1s" }
         },
-        /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, vg.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text3, marginTop: 1 } }, vg.txs.length, " transaction", vg.txs.length !== 1 ? "s" : "")),
-        /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color, flexShrink: 0 } }, "$", fmt$(vg.total)),
-        /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4, flexShrink: 0, marginLeft: 4 } }, vExpanded ? "\u25BE" : "\u203A")
-      ), vExpanded && /* @__PURE__ */ React.createElement("div", { style: { background: `${color}08` } }, txsSorted.map((t, ti) => /* @__PURE__ */ React.createElement("div", { key: t.id, style: { display: "flex", alignItems: "center", gap: 8, padding: "8px 16px 8px 52px", borderTop: `1px solid ${color}18` } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text3, whiteSpace: "nowrap" } }, t.date), t.source && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: T.accent, background: T.accentBg, borderRadius: 4, padding: "1px 5px", fontWeight: 500, whiteSpace: "nowrap" } }, t.source))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, fontWeight: 600, color, flexShrink: 0 } }, "$", fmt$(t.amount))))));
+        /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 500, color: T.text } }, cat), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginTop: 2, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4 } }, catTxs.length, " tx \xB7 ", vendorGroups.length, " vendors", months.size > 1 ? ` \xB7 ~$${fmt$(monthlyAvg)}/mo` : ""), hasShared && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: T.orange, background: `${T.orange}15`, borderRadius: 6, padding: "1px 6px", fontWeight: 600 } }, "\xBD"), hasShared && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4 } }, "full $", fmt$(fullTotal)))),
+        /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: T.text } }, "$", fmt$(myTotal_cat))),
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 2, flexShrink: 0 }, onClick: (e) => e.stopPropagation() }, [["E", "essential", T.accent], ["D", "discretionary", T.orange], ["\u2014", null, T.text4]].map(([lbl, val, col]) => {
+          const active = catGroups[cat] === val || val === null && !catGroups[cat];
+          return /* @__PURE__ */ React.createElement(
+            "button",
+            {
+              key: lbl,
+              onClick: () => setCatGroups((prev) => ({ ...prev, [cat]: val })),
+              style: {
+                width: 22,
+                height: 20,
+                borderRadius: 5,
+                border: `1px solid ${active ? col : T.border}`,
+                background: active ? `${col}20` : "none",
+                color: active ? col : T.text4,
+                fontSize: 9,
+                fontWeight: 700,
+                fontFamily: "inherit",
+                cursor: "pointer"
+              }
+            },
+            lbl
+          );
+        })),
+        /* @__PURE__ */ React.createElement(
+          "button",
+          {
+            onClick: (e) => {
+              e.stopPropagation();
+              toggleCategoryShared(cat);
+            },
+            style: {
+              fontSize: 10,
+              padding: "2px 7px",
+              borderRadius: 10,
+              border: `1px solid ${catTxs.every((t) => t.shared) && catTxs.length > 0 ? T.orange : T.border}`,
+              background: catTxs.every((t) => t.shared) && catTxs.length > 0 ? `${T.orange}20` : "none",
+              color: catTxs.every((t) => t.shared) && catTxs.length > 0 ? T.orange : T.text4,
+              fontWeight: 600,
+              cursor: "pointer",
+              fontFamily: "inherit",
+              flexShrink: 0
+            }
+          },
+          "\xBD"
+        ),
+        /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4, flexShrink: 0 } }, isExpanded ? "\u25BE" : "\u203A"),
+        /* @__PURE__ */ React.createElement(
+          "button",
+          {
+            onClick: (e) => {
+              e.stopPropagation();
+              setConfirmDeleteCat({ name: cat, typed: "" });
+            },
+            style: { background: "none", border: "none", color: T.text4, fontSize: 14, padding: "2px 4px", cursor: "pointer", flexShrink: 0, lineHeight: 1 },
+            onMouseEnter: (e) => e.currentTarget.style.color = T.danger,
+            onMouseLeave: (e) => e.currentTarget.style.color = T.text4
+          },
+          "\xD7"
+        )
+      ), isExpanded && /* @__PURE__ */ React.createElement("div", { style: { borderTop: `1px solid ${color}33`, background: `${color}05` } }, vendorGroups.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 16px", fontSize: 13, color: T.text4, textAlign: "center" } }, "No transactions") : vendorGroups.map((vg, vi) => {
+        const vKey = cat + "|" + vg.key;
+        const vExpanded = expandedVendor === vKey;
+        const txsSorted = [...vg.txs].sort((a, b) => b.date.localeCompare(a.date));
+        return /* @__PURE__ */ React.createElement("div", { key: vg.key, style: { borderBottom: vi < vendorGroups.length - 1 ? `1px solid ${color}22` : "none" } }, /* @__PURE__ */ React.createElement(
+          "div",
+          {
+            onClick: () => setExpandedVendor(vExpanded ? null : vKey),
+            style: { display: "flex", alignItems: "center", gap: 10, padding: "10px 16px 10px 36px", cursor: "pointer", background: vExpanded ? `${color}12` : "transparent", transition: "background .12s" }
+          },
+          /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, vg.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text3, marginTop: 1 } }, vg.txs.length, " transaction", vg.txs.length !== 1 ? "s" : "")),
+          /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color, flexShrink: 0 } }, "$", fmt$(vg.total)),
+          /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4, flexShrink: 0, marginLeft: 4 } }, vExpanded ? "\u25BE" : "\u203A")
+        ), vExpanded && /* @__PURE__ */ React.createElement("div", { style: { background: `${color}08` } }, txsSorted.map((t, ti) => /* @__PURE__ */ React.createElement("div", { key: t.id, style: { display: "flex", alignItems: "center", gap: 8, padding: "8px 16px 8px 52px", borderTop: `1px solid ${color}18` } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text3, whiteSpace: "nowrap" } }, t.date), t.source && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: T.accent, background: T.accentBg, borderRadius: 4, padding: "1px 5px", fontWeight: 500, whiteSpace: "nowrap" } }, t.source))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, fontWeight: 600, color, flexShrink: 0 } }, "$", fmt$(t.amount))))));
+      })));
     })));
-  }))), view === "import" && (() => {
+  })(), view === "import" && (() => {
     const dupes = importPreview.filter((t) => t._isDuplicate && !t._keepAnyway);
     const kept = importPreview.filter((t) => !t._isDuplicate || t._keepAnyway);
     const toggleKeep = (id) => setImportPreview((prev) => prev.map((t) => t.id === id ? { ...t, _keepAnyway: !t._keepAnyway } : t));
