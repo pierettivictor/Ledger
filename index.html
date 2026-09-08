@@ -13879,7 +13879,7 @@ function ExpenseTracker() {
         @keyframes modalIn{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
         @keyframes slideUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
         @keyframes dropIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
-      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px 8px", display: "flex", alignItems: "center", gap: 4, justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, letterSpacing: "-.3px", flexShrink: 0 } }, "Ledger ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, fontWeight: 600, color: T.text4, letterSpacing: 0 } }, "v15")), /* @__PURE__ */ React.createElement("div", { ref: navScrollRef, className: "nav-scroll", style: { display: "flex", gap: 0, overflowX: "auto", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch", scrollBehavior: "smooth", flex: 1, minWidth: 0 } }, ["dashboard", "averages", "categories", "transactions", "vendors", "records"].map((v) => /* @__PURE__ */ React.createElement(
+      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px 8px", display: "flex", alignItems: "center", gap: 4, justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, letterSpacing: "-.3px", flexShrink: 0 } }, "Ledger ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, fontWeight: 600, color: T.text4, letterSpacing: 0 } }, "v17")), /* @__PURE__ */ React.createElement("div", { ref: navScrollRef, className: "nav-scroll", style: { display: "flex", gap: 0, overflowX: "auto", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch", scrollBehavior: "smooth", flex: 1, minWidth: 0 } }, ["dashboard", "averages", "categories", "transactions", "vendors", "records"].map((v) => /* @__PURE__ */ React.createElement(
     "button",
     {
       key: v,
@@ -14052,11 +14052,15 @@ function ExpenseTracker() {
     } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: T.text2, fontWeight: 500 } }, label), sub && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4, marginLeft: 8 } }, sub)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, fontWeight: 600, color } }, "$", val)))));
   })()), view === "averages" && (() => {
     const today = /* @__PURE__ */ new Date();
-    const todayDay = today.getDate();
-    const curY = today.getFullYear(), curM = today.getMonth();
+    const selDate = curMonthDate;
+    const curY = selDate.getFullYear(), curM = selDate.getMonth();
     const daysInMonth = new Date(curY, curM + 1, 0).getDate();
-    const monthProgress = Math.min(1, todayDay / daysInMonth);
+    const isCurrentMonth = curY === today.getFullYear() && curM === today.getMonth();
+    const isFutureMonth = new Date(curY, curM, 1) > new Date(today.getFullYear(), today.getMonth(), 1);
+    const todayDay = isCurrentMonth ? today.getDate() : daysInMonth;
+    const monthProgress = isFutureMonth ? 0 : isCurrentMonth ? Math.min(1, todayDay / daysInMonth) : 1;
     const LOOKBACK = 12;
+    const monthName = selDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
     const eligible = (t) => t.category !== "Transfer" && t.category !== BUSINESS_CAT && !t.isCredit;
     const share = (t) => t.shared ? t.amount * 0.5 : t.amount;
     const histStart = new Date(curY, curM - LOOKBACK, 1);
@@ -14077,22 +14081,29 @@ function ExpenseTracker() {
     const histMonthSet = new Set(hist.map((t) => monthKey(parseDateStr(t.date))));
     const nMonths = histMonthSet.size;
     if (nMonths === 0) {
-      return /* @__PURE__ */ React.createElement("div", { style: { padding: "40px 20px", textAlign: "center", color: T.text3, fontSize: 13 } }, "No prior months of history yet \u2014 import a few months and averages will appear here.");
+      return /* @__PURE__ */ React.createElement("div", { style: { padding: "40px 20px", textAlign: "center", color: T.text3, fontSize: 13 } }, "No history before ", monthName, " \u2014 import earlier months and averages will appear here.");
     }
     const cats = {};
-    const touch = (c) => {
-      if (!cats[c]) cats[c] = { cat: c, months: {}, cur: 0, curTx: 0 };
+    const touchCat = (c) => {
+      if (!cats[c]) cats[c] = { cat: c, months: {}, cur: 0, curTx: 0, vendors: {} };
       return cats[c];
     };
+    const vKeyOf = (t) => (t.description || "").trim().toLowerCase();
     hist.forEach((t) => {
+      const d = parseDateStr(t.date);
       const c = t.category || "Uncategorized";
-      const e = touch(c);
-      const mk = monthKey(parseDateStr(t.date));
+      const e = touchCat(c);
+      const mk = monthKey(d);
       e.months[mk] = (e.months[mk] || 0) + share(t);
+      const vk = vKeyOf(t);
+      if (!e.vendors[vk]) e.vendors[vk] = { name: (t.description || "").trim(), months: {}, days: [] };
+      const v = e.vendors[vk];
+      v.months[mk] = (v.months[mk] || 0) + share(t);
+      v.days.push(d.getDate());
     });
     cur.forEach((t) => {
       const c = t.category || "Uncategorized";
-      const e = touch(c);
+      const e = touchCat(c);
       e.cur += share(t);
       e.curTx += 1;
     });
@@ -14101,12 +14112,78 @@ function ExpenseTracker() {
       const a = [...arr].sort((x, y) => x - y), m = Math.floor(a.length / 2);
       return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
     };
+    const orderedMonths = [...histMonthSet].sort();
+    const cents = (n) => Math.round(n * 100);
+    const detectFixed = (v) => {
+      let bestAmt = null, bestRun = 0, run = 0, prev = null;
+      orderedMonths.forEach((mk) => {
+        const val = v.months[mk];
+        if (val === void 0) {
+          run = 0;
+          prev = null;
+          return;
+        }
+        if (prev !== null && cents(val) === cents(prev)) run += 1;
+        else run = 1;
+        prev = val;
+        if (run > bestRun) {
+          bestRun = run;
+          bestAmt = val;
+        }
+      });
+      let lastAmt = null, lastRun = 0, r = 0, pv = null;
+      orderedMonths.forEach((mk) => {
+        const val = v.months[mk];
+        if (val === void 0) {
+          r = 0;
+          pv = null;
+          return;
+        }
+        if (pv !== null && cents(val) === cents(pv)) r += 1;
+        else r = 1;
+        pv = val;
+        if (r >= 3) {
+          lastAmt = val;
+          lastRun = r;
+        }
+      });
+      if (lastAmt !== null) return { amt: lastAmt, run: lastRun };
+      if (bestRun >= 3) return { amt: bestAmt, run: bestRun };
+      return null;
+    };
     const rows = Object.values(cats).map((e) => {
       const vals = [...histMonthSet].map((mk) => e.months[mk] || 0);
       const seen = vals.filter((v) => v > 0).length;
-      const avg = vals.reduce((s, v) => s + v, 0) / nMonths;
       const med = median(vals);
-      const pace = avg * monthProgress;
+      let expected = 0, expectedByNow = 0, fixedCount = 0, fixedTotal = 0;
+      let anyLate = false, lateAmt = 0, lateDay = null;
+      Object.values(e.vendors).forEach((v) => {
+        const vVals = orderedMonths.map((mk) => v.months[mk] || 0);
+        const vAvg = vVals.reduce((s, x) => s + x, 0) / nMonths;
+        const vSeen = vVals.filter((x) => x > 0).length;
+        const fixed = detectFixed(v);
+        const dueDay = Math.round(median(v.days));
+        const spread = v.days.length ? Math.max(...v.days) - Math.min(...v.days) : 99;
+        const dated = (fixed || vSeen >= Math.max(2, nMonths * 0.5)) && spread <= 12;
+        const amt = fixed ? fixed.amt : vAvg;
+        expected += amt;
+        if (fixed) {
+          fixedCount += 1;
+          fixedTotal += amt;
+        }
+        if (dated) {
+          if (dueDay <= todayDay) expectedByNow += amt;
+          else if (amt > 0.01) {
+            anyLate = true;
+            lateAmt += amt;
+            if (lateDay === null || dueDay < lateDay) lateDay = dueDay;
+          }
+        } else {
+          expectedByNow += amt * monthProgress;
+        }
+      });
+      const avg = expected;
+      const pace = expectedByNow;
       const diff = e.cur - avg;
       const paceDiff = e.cur - pace;
       return {
@@ -14117,16 +14194,20 @@ function ExpenseTracker() {
         pace,
         diff,
         paceDiff,
+        fixedCount,
+        fixedTotal,
+        anyLate,
+        lateAmt,
+        lateDay,
         pct: avg > 0 ? e.cur / avg : e.cur > 0 ? Infinity : 0
       };
     }).filter((r) => r.avg > 0 || r.cur > 0).sort((a, b) => b.avg - a.avg);
     const totAvg = rows.reduce((s, r) => s + r.avg, 0);
     const totCur = rows.reduce((s, r) => s + r.cur, 0);
-    const totPace = totAvg * monthProgress;
+    const totPace = rows.reduce((s, r) => s + r.pace, 0);
     const totDiff = totCur - totPace;
     const over = rows.filter((r) => r.paceDiff > 0.01).length;
     const under = rows.filter((r) => r.paceDiff < -0.01).length;
-    const monthName = today.toLocaleDateString("en-US", { month: "long" });
     const Bar = ({ r }) => {
       const scale = Math.max(r.avg, r.cur, 0.01);
       const avgPct = r.avg / scale * 100;
@@ -14156,7 +14237,7 @@ function ExpenseTracker() {
       color: totDiff > 0 ? "#e5484d" : "#30a46c",
       textTransform: "uppercase",
       letterSpacing: ".08em"
-    } }, totDiff > 0 ? "Above pace" : "Below pace", " \u2014 ", monthName), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 32, fontWeight: 700, letterSpacing: "-.5px", margin: "6px 0 2px" } }, "$", fmt$(totCur)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: T.text2 } }, totDiff > 0 ? "$" + fmt$(totDiff) + " ahead of" : "$" + fmt$(Math.abs(totDiff)) + " behind", " where you'd typically be by the ", todayDay, todayDay === 1 ? "st" : todayDay === 2 ? "nd" : todayDay === 3 ? "rd" : "th"), /* @__PURE__ */ React.createElement("div", { style: { position: "relative", height: 10, background: T.bg, borderRadius: 5, margin: "12px 0 8px", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
+    } }, totDiff > 0 ? isCurrentMonth ? "Above pace" : "Above average" : isCurrentMonth ? "Below pace" : "Below average", " \u2014 ", monthName), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 32, fontWeight: 700, letterSpacing: "-.5px", margin: "6px 0 2px" } }, "$", fmt$(totCur)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: T.text2 } }, totDiff > 0 ? "$" + fmt$(totDiff) + " above" : "$" + fmt$(Math.abs(totDiff)) + " below", " ", isCurrentMonth ? `where you'd typically be by the ${todayDay}${todayDay === 1 ? "st" : todayDay === 2 ? "nd" : todayDay === 3 ? "rd" : "th"}` : "a typical month"), /* @__PURE__ */ React.createElement("div", { style: { position: "relative", height: 10, background: T.bg, borderRadius: 5, margin: "12px 0 8px", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
       position: "absolute",
       left: 0,
       top: 0,
@@ -14164,7 +14245,7 @@ function ExpenseTracker() {
       width: `${Math.min(100, totCur / Math.max(totAvg, 0.01) * 100)}%`,
       background: totDiff > 0 ? "#e5484d" : "#30a46c",
       borderRadius: 5
-    } }), /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: `${monthProgress * 100}%`, top: -2, bottom: -2, width: 2, background: T.text3 } })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: 11, color: T.text3 } }, /* @__PURE__ */ React.createElement("span", null, "Typical full month $", fmt$(totAvg)), /* @__PURE__ */ React.createElement("span", null, over, " over \xB7 ", under, " under"))), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderRadius: 14, boxShadow: T.shadowSm, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
+    } }), /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: `${Math.min(100, totPace / Math.max(totAvg, 0.01) * 100)}%`, top: -2, bottom: -2, width: 2, background: T.text3 } })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: 11, color: T.text3 } }, /* @__PURE__ */ React.createElement("span", null, "Typical full month $", fmt$(totAvg)), /* @__PURE__ */ React.createElement("span", null, over, " over \xB7 ", under, " under"))), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderRadius: 14, boxShadow: T.shadowSm, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
       padding: "10px 16px",
       fontSize: 11,
       fontWeight: 700,
@@ -14175,8 +14256,8 @@ function ExpenseTracker() {
     } }, "By category \u2014 this month vs. ", nMonths, "-month average"), rows.map((r) => {
       const bad = r.paceDiff > 0.01;
       const pctTxt = r.avg > 0 ? Math.round(r.cur / r.avg * 100) + "%" : "new";
-      return /* @__PURE__ */ React.createElement("div", { key: r.cat, style: { padding: "12px 16px", borderBottom: `1px solid ${T.border}` } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 600, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, r.cat), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, fontWeight: 700 } }, "$", fmt$(r.cur)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text3 } }, "avg $", fmt$(r.avg)))), /* @__PURE__ */ React.createElement(Bar, { r }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 11 } }, /* @__PURE__ */ React.createElement("span", { style: { color: bad ? "#e5484d" : "#30a46c", fontWeight: 600 } }, bad ? "\u25B2" : "\u25BC", " $", fmt$(Math.abs(r.paceDiff)), " vs pace"), /* @__PURE__ */ React.createElement("span", { style: { color: T.text4 } }, pctTxt, " of typical \xB7 ", r.seen, "/", nMonths, " mo \xB7 med $", fmt$(r.med))));
-    })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.text4, padding: "10px 4px 0", lineHeight: 1.5 } }, "Averages come from the ", nMonths, " complete month", nMonths === 1 ? "" : "s", " before ", monthName, "; months with no spend in a category count as zero, so the average isn't inflated. The grey tick is where you'd typically be ", Math.round(monthProgress * 100), "% of the way through the month. Transfers, credits and Cuban Palms excluded; shared counted at half."));
+      return /* @__PURE__ */ React.createElement("div", { key: r.cat, style: { padding: "12px 16px", borderBottom: `1px solid ${T.border}` } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 600, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, r.cat), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, fontWeight: 700 } }, "$", fmt$(r.cur)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text3 } }, "avg $", fmt$(r.avg)))), /* @__PURE__ */ React.createElement(Bar, { r }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 11, gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { color: bad ? "#e5484d" : "#30a46c", fontWeight: 600, flexShrink: 0 } }, bad ? "\u25B2" : "\u25BC", " $", fmt$(Math.abs(r.paceDiff)), " vs ", isCurrentMonth ? "pace" : "avg"), /* @__PURE__ */ React.createElement("span", { style: { color: T.text4, textAlign: "right", minWidth: 0 } }, pctTxt, " of typical \xB7 ", r.seen, "/", nMonths, " mo", r.fixedCount > 0 && ` \xB7 ${r.fixedCount} fixed`)), isCurrentMonth && r.anyLate && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 11, color: T.text3 } }, "$", fmt$(r.lateAmt), " not due until the ", r.lateDay, r.lateDay === 1 ? "st" : r.lateDay === 2 ? "nd" : r.lateDay === 3 ? "rd" : "th", " \u2014 excluded from pace"));
+    })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.text4, padding: "10px 4px 0", lineHeight: 1.5 } }, "Averages come from the ", nMonths, " complete month", nMonths === 1 ? "" : "s", " before ", monthName, "; months with no spend in a category count as zero, so the average isn't inflated. ", isCurrentMonth ? "Pace respects timing: a bill that historically lands on the 26th isn't counted against you on the 10th \u2014 only spending that's actually spread across the month is prorated. Amounts identical for 3+ straight months are treated as fixed and used exactly." : "This month has ended, so it's compared against a full typical month.", " Use the month picker above to compare a different month. Transfers, credits and Cuban Palms excluded; shared counted at half."));
   })(), view === "records" && (() => {
     const bySrc = {};
     rangeTxs.forEach((t) => {
