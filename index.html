@@ -12895,7 +12895,24 @@ const VENDOR_MAP = [
   [/VOLVO/, "Volvo Car Financial"],
   [/PROGRESSIVE/, "Progressive Insurance"],
   [/\bSCANA|DOMINION/, "SCANA"],
+  // Specific Amazon/Uber lines MUST precede the generic ones below
+  [/AMA?Z(ON|N).*(FRESH|GROCER)|WHOLEFDS|WHOLE FOODS/, "Amazon Grocery"],
+  [/AMA?Z(ON|N).*(TIPS?|GRATUITY)|AMZN TIPS/, "Amazon Grocery"],
+  // tips ride with grocery
+  [/AMA?Z(ON|N).*(MKTP|MARKETPLACE)|AMZN MKTP/, "Amazon Marketplace"],
+  [/PRIME VIDEO|AMAZON PRIME|AMZN PRIME/, "Amazon Prime"],
   [/AMAZON|AMZN/, "Amazon"],
+  [/UBER\s*\*?\s*EATS|UBEREATS/, "Uber Eats"],
+  [/UBER.*(TIP|GRATUITY)/, "Uber Tips"],
+  [/UBER\s*\*?\s*(TRIP|RIDE)|UBER BV|UBER TECHNOLOGIES/, "Uber Rides"],
+  [/\bUBER\b/, "Uber"],
+  [/LYFT/, "Lyft"],
+  [/DOORDASH|DASHPASS/, "DoorDash"],
+  [/GRUBHUB|SEAMLESS/, "Grubhub"],
+  [/ADVS ED SERV|STUDNTLOAN|NELNET|MOHELA|SALLIE MAE/, "Student Loan"],
+  [/APPLECARD|GSBANK/, "Apple Card"],
+  [/ATM CASH DEPOSIT/, "ATM Cash Deposit"],
+  [/ATM WITHDRAWAL|NON-WF ATM/, "ATM Withdrawal"],
   [/7[- ]?ELEVEN/i, "7-Eleven"],
   [/\bRING\b/, "Ring"],
   [/SPOTIFY/, "Spotify"],
@@ -13578,6 +13595,39 @@ function ExpenseTracker() {
   useEffect(() => {
     saveData({ transactions, categories, catColors, vendorMap, importLog, catGroups });
   }, [transactions, categories, catColors, vendorMap, importLog, catGroups]);
+  const UNDO_LIMIT = 25;
+  const [undoStack, setUndoStack] = useState([]);
+  const undoPrev = useRef(null);
+  const undoing = useRef(false);
+  useEffect(() => {
+    const snap = { transactions, categories, catColors, vendorMap, catGroups, importLog };
+    if (undoPrev.current === null) {
+      undoPrev.current = snap;
+      return;
+    }
+    if (undoing.current) {
+      undoing.current = false;
+      undoPrev.current = snap;
+      return;
+    }
+    const before = undoPrev.current;
+    undoPrev.current = snap;
+    setUndoStack((st) => [...st.slice(-(UNDO_LIMIT - 1)), before]);
+  }, [transactions, categories, catColors, vendorMap, catGroups, importLog]);
+  const undo = () => {
+    setUndoStack((st) => {
+      if (!st.length) return st;
+      const last = st[st.length - 1];
+      undoing.current = true;
+      setTransactions(last.transactions);
+      setCategories(last.categories);
+      setCatColors(last.catColors);
+      setVendorMap(last.vendorMap);
+      setCatGroups(last.catGroups);
+      setImportLog(last.importLog);
+      return st.slice(0, -1);
+    });
+  };
   useEffect(() => {
     if (!Object.keys(vendorMap).length) return;
     setTransactions((prev) => {
@@ -13792,6 +13842,7 @@ function ExpenseTracker() {
   };
   const updateTxCategory = (id, cat) => setTransactions((prev) => prev.map((t) => t.id === id ? { ...t, category: cat } : t));
   const updateTxSource = (id, src) => setTransactions((prev) => prev.map((t) => t.id === id ? { ...t, source: src } : t));
+  const toggleTxSign = (id) => setTransactions((prev) => prev.map((t) => t.id === id ? { ...t, isCredit: !t.isCredit } : t));
   const toggleShared = (id) => setTransactions((prev) => prev.map((t) => t.id === id ? { ...t, shared: !t.shared } : t));
   const toggleCategoryShared = (cat) => setTransactions((prev) => {
     const catTxs = prev.filter((t) => t.category === cat);
@@ -13993,7 +14044,29 @@ function ExpenseTracker() {
         @keyframes modalIn{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
         @keyframes slideUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
         @keyframes dropIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
-      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px 8px", display: "flex", alignItems: "center", gap: 4, justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, letterSpacing: "-.3px", flexShrink: 0 } }, "Ledger ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, fontWeight: 600, color: T.text4, letterSpacing: 0 } }, "v24")), /* @__PURE__ */ React.createElement("div", { ref: navScrollRef, className: "nav-scroll", style: { display: "flex", gap: 0, overflowX: "auto", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch", scrollBehavior: "smooth", flex: 1, minWidth: 0 } }, ["dashboard", "averages", "categories", "transactions", "vendors", "records"].map((v) => /* @__PURE__ */ React.createElement(
+      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px 8px", display: "flex", alignItems: "center", gap: 4, justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, letterSpacing: "-.3px", flexShrink: 0, display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", null, "Ledger ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, fontWeight: 600, color: T.text4, letterSpacing: 0 } }, "v27")), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: undo,
+      disabled: undoStack.length === 0,
+      title: undoStack.length ? `Undo (${undoStack.length} step${undoStack.length === 1 ? "" : "s"} available)` : "Nothing to undo",
+      style: {
+        fontSize: 11,
+        fontWeight: 600,
+        fontFamily: "inherit",
+        padding: "3px 9px",
+        borderRadius: 12,
+        border: `1px solid ${undoStack.length ? T.border : "transparent"}`,
+        background: undoStack.length ? T.bg : "transparent",
+        color: undoStack.length ? T.text2 : T.text4,
+        opacity: undoStack.length ? 1 : 0.35,
+        cursor: undoStack.length ? "pointer" : "default",
+        flexShrink: 0
+      }
+    },
+    "\u21A9 Undo",
+    undoStack.length > 1 ? ` ${undoStack.length}` : ""
+  )), /* @__PURE__ */ React.createElement("div", { ref: navScrollRef, className: "nav-scroll", style: { display: "flex", gap: 0, overflowX: "auto", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch", scrollBehavior: "smooth", flex: 1, minWidth: 0 } }, ["dashboard", "averages", "categories", "transactions", "vendors", "records"].map((v) => /* @__PURE__ */ React.createElement(
     "button",
     {
       key: v,
@@ -14932,6 +15005,28 @@ function ExpenseTracker() {
           marginLeft: 2,
           color: isCredit ? T.green : isTransfer ? T.text3 : T.text2
         } }, isCredit ? /* @__PURE__ */ React.createElement("span", { style: { color: T.green } }, "\u2212$", fmt$(t.amount)) : `$${fmt$(t.amount)}`), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }), !editMode && /* @__PURE__ */ React.createElement(
+          "button",
+          {
+            onClick: (e) => {
+              e.stopPropagation();
+              toggleTxSign(t.id);
+            },
+            title: isCredit ? "Counted as money in \u2014 tap to make it an expense" : "Counted as an expense \u2014 tap to make it money in",
+            style: {
+              fontSize: 10,
+              padding: "2px 7px",
+              borderRadius: 10,
+              border: `1px solid ${isCredit ? T.green : T.border}`,
+              background: isCredit ? `${T.green}20` : "none",
+              color: isCredit ? T.green : T.text4,
+              fontWeight: 700,
+              cursor: "pointer",
+              fontFamily: "inherit",
+              flexShrink: 0
+            }
+          },
+          isCredit ? "+" : "\u2212"
+        ), !editMode && /* @__PURE__ */ React.createElement(
           "button",
           {
             onClick: (e) => {
