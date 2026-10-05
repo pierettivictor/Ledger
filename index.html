@@ -12,10 +12,31 @@
 <div id="err"></div><div id="root"></div>
 <script>window.onerror=function(m,s,l,c,e){var d=document.getElementById('err');d.style.display='block';d.textContent='Error: '+m+' @'+l+':'+c+(e&&e.stack?'\n'+e.stack:'');};</script>
 <script>(() => {
+  var __create = Object.create;
+  var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
   var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __getProtoOf = Object.getPrototypeOf;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
   var __commonJS = (cb, mod) => function __require() {
     return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
   };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+    // If the importer is in node compatibility mode or this is not an ESM
+    // file that has been converted to a CommonJS file using a Babel-
+    // compatible transform (i.e. "__esModule" has not been set), then set
+    // "default" to the CommonJS "module.exports" for node compatibility.
+    isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+    mod
+  ));
 
   // .npm-global/lib/node_modules/react/cjs/react.production.js
   var require_react_production = __commonJS({
@@ -936,7 +957,7 @@
       "use strict";
       var Scheduler = require_scheduler();
       var React2 = require_react();
-      var ReactDOM2 = require_react_dom();
+      var ReactDOM = require_react_dom();
       function formatProdErrorMessage(code) {
         var url = "https://react.dev/errors/" + code;
         if (1 < arguments.length) {
@@ -1127,7 +1148,7 @@
       }
       var isArrayImpl = Array.isArray;
       var ReactSharedInternals = React2.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;
-      var ReactDOMSharedInternals = ReactDOM2.__DOM_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;
+      var ReactDOMSharedInternals = ReactDOM.__DOM_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;
       var sharedNotPendingObject = {
         pending: false,
         data: null,
@@ -12698,10 +12719,10 @@
   });
 
   // ../../tmp/react-entry.js
-  var React = require_react();
-  var ReactDOM = require_client();
-  window.React = React;
-  window.ReactDOM = ReactDOM;
+  var import_react = __toESM(require_react());
+  var ReactDOMClient = __toESM(require_client());
+  window.React = import_react.default;
+  window.ReactDOM = ReactDOMClient;
 })();
 /*! Bundled license information:
 
@@ -12864,6 +12885,56 @@ const endOfYear = (d) => new Date(d.getFullYear(), 11, 31, 23, 59, 59, 999);
 const fmtDate = (d) => `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}/${d.getFullYear()}`;
 const fmtShort = (d) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 const fmtMonth = (d) => d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+const VENDOR_MAP = [
+  [/RHORLLC|JPOP/, "RHORLLC JPOP"],
+  [/DUKE\s?ENERGY/, "Duke Energy"],
+  [/TOHO/, "TOHO Water Authority"],
+  [/CLICKPAY|PROPRTYPAY/, "ClickPay"],
+  [/SPECTR/, "Spectrum"],
+  [/VERIZON/, "Verizon"],
+  [/VOLVO/, "Volvo Car Financial"],
+  [/PROGRESSIVE/, "Progressive Insurance"],
+  [/\bSCANA|DOMINION/, "SCANA"],
+  [/AMAZON|AMZN/, "Amazon"],
+  [/\bRING\b/, "Ring"],
+  [/SPOTIFY/, "Spotify"],
+  [/NETFLIX/, "Netflix"],
+  [/APPLE\.?COM|APPLE APP|ITUNES/, "Apple"],
+  [/MEALPAL/, "MealPal"],
+  [/NEW YORK UNIV|\bNYU\b/, "New York University"],
+  [/INTERNAL REVENUE|\bIRS\b/, "IRS"],
+  [/EXECUTIVE VILLAS|EXECUT/, "Executive Villas"],
+  [/PARADISE PALMS/, "Paradise Palms"],
+  [/CHASE CREDIT|CRD EPAY/, "Chase Credit Card"],
+  [/GSBANK|APPLE CARD/, "Apple Card"],
+  [/VENMO/, "Venmo"],
+  [/\bXOOM\b/, "Xoom"],
+  [/USCIS/, "USCIS"],
+  [/\bPSEG\b/, "PSEG"],
+  [/LOTTO/, "Lotto.com"]
+];
+const SELF = /\b(VICTOR|PIERETTI|PIERE|PIER|V PIERETTI)\b/g;
+function cleanDesc(raw) {
+  if (!raw) return "";
+  let s = String(raw).toUpperCase().replace(/\s+/g, " ").trim();
+  s = s.replace(/^(PURCHASE RETURN AUTHORIZED ON|PURCHASE AUTHORIZED ON|RECURRING PAYMENT AUTHORIZED ON|RECURRING TRANSFER TO|ONLINE TRANSFER (TO|FROM)|ATM WITHDRAWAL AUTHORIZED ON|NON-WF ATM WITHDRAWAL AUTHORIZED ON|BILL PAY|ACH CREDIT|ACH DEBIT)\s*/, "");
+  s = s.replace(/^\d{1,2}\/\d{1,2}\s+/, "");
+  const z = s.match(/^ZELLE (TO|FROM) (.+?)(?: ON \d{1,2}\/\d{1,2})?(?: REF\s*#.*)?$/);
+  if (z) {
+    const who = z[2].replace(/\b(LLC|INC)\.?\b/g, "").replace(/[.,]+$/, "").replace(/\s+/g, " ").trim();
+    return "Zelle " + z[1].toLowerCase() + " " + who.replace(/\b\w+/g, (w) => w[0] + w.slice(1).toLowerCase());
+  }
+  for (const [re, name] of VENDOR_MAP) if (re.test(s)) return name;
+  s = s.replace(/\s+(REF\s*#|CARD \d{4}|AUTH #|TRACE #|CONF#|ID:).*$/, "");
+  s = s.replace(/\b\d{5,}\b/g, "");
+  s = s.replace(/\b[A-Z0-9]*\d[A-Z0-9]*\b/g, "");
+  s = s.replace(/\b\d+(?:\.\d+)*\b/g, "");
+  s = s.replace(/\b(WEB PMTS?|ONLINE PMT|BILL PAY|PROPRTYPAY|CASH DISB|DES:|INDN:|CO ID:|PPD|CCD|TEL|PMT)\b/g, "");
+  s = s.replace(SELF, "");
+  s = s.replace(/\.(COM|NET|ORG)\b/g, "").replace(/\*.*$/, "");
+  s = s.replace(/[^A-Z0-9&' -]/g, " ").replace(/\s+/g, " ").replace(/[-\s]+$/, "").trim();
+  return s.replace(/\b[A-Z]+\b/g, (w) => w.length <= 3 ? w : w[0] + w.slice(1).toLowerCase());
+}
 const fmt$ = (n) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 function normalizeDate(raw) {
   if (!raw) return "";
@@ -13879,7 +13950,7 @@ function ExpenseTracker() {
         @keyframes modalIn{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
         @keyframes slideUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
         @keyframes dropIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
-      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px 8px", display: "flex", alignItems: "center", gap: 4, justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, letterSpacing: "-.3px", flexShrink: 0 } }, "Ledger ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, fontWeight: 600, color: T.text4, letterSpacing: 0 } }, "v18")), /* @__PURE__ */ React.createElement("div", { ref: navScrollRef, className: "nav-scroll", style: { display: "flex", gap: 0, overflowX: "auto", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch", scrollBehavior: "smooth", flex: 1, minWidth: 0 } }, ["dashboard", "averages", "categories", "transactions", "vendors", "records"].map((v) => /* @__PURE__ */ React.createElement(
+      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px 8px", display: "flex", alignItems: "center", gap: 4, justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, letterSpacing: "-.3px", flexShrink: 0 } }, "Ledger ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, fontWeight: 600, color: T.text4, letterSpacing: 0 } }, "v19")), /* @__PURE__ */ React.createElement("div", { ref: navScrollRef, className: "nav-scroll", style: { display: "flex", gap: 0, overflowX: "auto", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch", scrollBehavior: "smooth", flex: 1, minWidth: 0 } }, ["dashboard", "averages", "categories", "transactions", "vendors", "records"].map((v) => /* @__PURE__ */ React.createElement(
     "button",
     {
       key: v,
@@ -14088,7 +14159,7 @@ function ExpenseTracker() {
       if (!cats[c]) cats[c] = { cat: c, months: {}, cur: 0, curTx: 0, vendors: {} };
       return cats[c];
     };
-    const vKeyOf = (t) => (t.description || "").trim().toLowerCase();
+    const vKeyOf = (t) => (cleanDesc(t.description) || "(unknown)").toLowerCase();
     hist.forEach((t) => {
       const d = parseDateStr(t.date);
       const c = t.category || "Uncategorized";
@@ -14096,7 +14167,7 @@ function ExpenseTracker() {
       const mk = monthKey(d);
       e.months[mk] = (e.months[mk] || 0) + share(t);
       const vk = vKeyOf(t);
-      if (!e.vendors[vk]) e.vendors[vk] = { name: (t.description || "").trim(), months: {}, days: [] };
+      if (!e.vendors[vk]) e.vendors[vk] = { name: cleanDesc(t.description), months: {}, days: [] };
       const v = e.vendors[vk];
       v.months[mk] = (v.months[mk] || 0) + share(t);
       v.days.push(d.getDate());
