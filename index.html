@@ -13740,23 +13740,25 @@ function ExpenseTracker() {
       if (!groups[clean]) groups[clean] = /* @__PURE__ */ new Set();
       groups[clean].add(t.category || "");
     });
-    const isSplit = {};
-    Object.entries(groups).forEach(([clean, cats]) => {
-      const real = [...cats].filter(Boolean);
-      isSplit[clean] = new Set(real).size > 1;
+    const newNameFor = (t) => cleanDesc((t.description || "").trim()) || "(unknown)";
+    const catTally = {};
+    transactions.forEach((t) => {
+      const nm = newNameFor(t);
+      if (!t.category) return;
+      (catTally[nm] = catTally[nm] || {})[t.category] = (catTally[nm][t.category] || 0) + 1;
     });
-    const newNameFor = (t) => {
-      const raw = (t.description || "").trim();
-      const clean = cleanDesc(raw) || "(unknown)";
-      return isSplit[clean] && t.category ? `${clean} \xB7 ${t.category}` : clean;
+    const dominantCat = (nm) => {
+      const c = catTally[nm];
+      if (!c) return "";
+      return Object.entries(c).sort((a, b) => b[1] - a[1])[0][0];
     };
     const nextMap = { ...vendorMap };
     transactions.forEach((t) => {
       const oldKey = (t.description || "").trim().toLowerCase();
-      const newKey = newNameFor(t).toLowerCase();
+      const nm = newNameFor(t), newKey = nm.toLowerCase();
       if (oldKey === newKey) return;
-      const cat = vendorMap[oldKey] || t.category;
-      if (cat && !nextMap[newKey]) nextMap[newKey] = cat;
+      const cat = dominantCat(nm) || vendorMap[oldKey] || t.category;
+      if (cat) nextMap[newKey] = cat;
     });
     setTransactions((prev) => prev.map((t) => {
       const nn = newNameFor(t);
@@ -13991,7 +13993,7 @@ function ExpenseTracker() {
         @keyframes modalIn{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
         @keyframes slideUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
         @keyframes dropIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
-      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px 8px", display: "flex", alignItems: "center", gap: 4, justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, letterSpacing: "-.3px", flexShrink: 0 } }, "Ledger ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, fontWeight: 600, color: T.text4, letterSpacing: 0 } }, "v23")), /* @__PURE__ */ React.createElement("div", { ref: navScrollRef, className: "nav-scroll", style: { display: "flex", gap: 0, overflowX: "auto", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch", scrollBehavior: "smooth", flex: 1, minWidth: 0 } }, ["dashboard", "averages", "categories", "transactions", "vendors", "records"].map((v) => /* @__PURE__ */ React.createElement(
+      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px 8px", display: "flex", alignItems: "center", gap: 4, justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, letterSpacing: "-.3px", flexShrink: 0 } }, "Ledger ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, fontWeight: 600, color: T.text4, letterSpacing: 0 } }, "v24")), /* @__PURE__ */ React.createElement("div", { ref: navScrollRef, className: "nav-scroll", style: { display: "flex", gap: 0, overflowX: "auto", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch", scrollBehavior: "smooth", flex: 1, minWidth: 0 } }, ["dashboard", "averages", "categories", "transactions", "vendors", "records"].map((v) => /* @__PURE__ */ React.createElement(
     "button",
     {
       key: v,
@@ -14400,8 +14402,7 @@ function ExpenseTracker() {
       const raw = (t.description || "").trim();
       if (!raw) return;
       const clean = cleanDesc(raw) || "(unknown)";
-      const split = Object.keys(groups[clean].cats).length > 1;
-      const nm = split && t.category ? `${clean} \xB7 ${t.category}` : clean;
+      const nm = clean;
       if (!finalMap[nm]) finalMap[nm] = { name: nm, n: 0, total: 0, cats: {} };
       finalMap[nm].n++;
       finalMap[nm].total += t.amount;
@@ -14418,16 +14419,16 @@ function ExpenseTracker() {
         alert("Couldn't copy on this device.");
       }
     };
-    const nMerged = merges.filter((g) => g.variants > 1 && !g.split).length;
-    const nSplit = merges.filter((g) => g.split).length;
-    const nRenamed = merges.filter((g) => g.variants === 1 && !g.split).length;
+    const nMerged = merges.filter((g) => g.variants > 1).length;
+    const nMixed = merges.filter((g) => g.split).length;
+    const nRenamed = merges.filter((g) => g.variants === 1).length;
     return /* @__PURE__ */ React.createElement("div", { style: {
       background: T.bgCard,
       borderRadius: 12,
       border: `1px solid ${T.border}`,
       marginBottom: 16,
       overflow: "hidden"
-    } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 14px", borderBottom: `1px solid ${T.border}` } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em", color: T.text3 } }, "Vendor name cleanup \u2014 review"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: T.text2, marginTop: 4 } }, nMerged, " merge into one vendor \xB7 ", nSplit, " kept separate by category \xB7 ", nRenamed, " renamed only."), merges.length > 0 && /* @__PURE__ */ React.createElement(
+    } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 14px", borderBottom: `1px solid ${T.border}` } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em", color: T.text3 } }, "Vendor name cleanup \u2014 review"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: T.text2, marginTop: 4 } }, nMerged, " merge into one vendor \xB7 ", nRenamed, " renamed only", nMixed > 0 ? ` \xB7 ${nMixed} will hold transactions in more than one category` : "", "."), merges.length > 0 && /* @__PURE__ */ React.createElement(
       "button",
       {
         onClick: () => {
@@ -14479,7 +14480,7 @@ function ExpenseTracker() {
       gap: 10,
       padding: "8px 14px",
       borderBottom: `1px solid ${T.border}`
-    } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, v.name), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4, flexShrink: 0 } }, v.n, " tx \xB7 $", fmt$(v.total))))), /* @__PURE__ */ React.createElement("div", { style: { maxHeight: 420, overflowY: "auto", display: cleanupView === "merges" ? "block" : "none" } }, merges.map((g) => /* @__PURE__ */ React.createElement("div", { key: g.clean, style: { padding: "9px 14px", borderBottom: `1px solid ${T.border}` } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, fontWeight: 600 } }, g.clean), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4, flexShrink: 0 } }, g.n, " tx \xB7 $", fmt$(g.total))), g.split && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "#FF9500", marginTop: 3 } }, "Stays split by category: ", g.catList.join(", ")), Object.entries(g.raws).map(([raw, c]) => /* @__PURE__ */ React.createElement("div", { key: raw, style: {
+    } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, v.name), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4, flexShrink: 0 } }, Object.keys(v.cats).length > 1 ? `${Object.keys(v.cats).length} cats \xB7 ` : "", v.n, " tx \xB7 $", fmt$(v.total))))), /* @__PURE__ */ React.createElement("div", { style: { maxHeight: 420, overflowY: "auto", display: cleanupView === "merges" ? "block" : "none" } }, merges.map((g) => /* @__PURE__ */ React.createElement("div", { key: g.clean, style: { padding: "9px 14px", borderBottom: `1px solid ${T.border}` } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, fontWeight: 600 } }, g.clean), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4, flexShrink: 0 } }, g.n, " tx \xB7 $", fmt$(g.total))), g.split && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "#FF9500", marginTop: 3 } }, "Mixed categories kept per transaction: ", g.catList.join(", ")), Object.entries(g.raws).map(([raw, c]) => /* @__PURE__ */ React.createElement("div", { key: raw, style: {
       fontSize: 11,
       color: T.text4,
       marginTop: 2,
