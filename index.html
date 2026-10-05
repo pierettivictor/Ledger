@@ -12896,6 +12896,7 @@ const VENDOR_MAP = [
   [/PROGRESSIVE/, "Progressive Insurance"],
   [/\bSCANA|DOMINION/, "SCANA"],
   [/AMAZON|AMZN/, "Amazon"],
+  [/7[- ]?ELEVEN/i, "7-Eleven"],
   [/\bRING\b/, "Ring"],
   [/SPOTIFY/, "Spotify"],
   [/NETFLIX/, "Netflix"],
@@ -12931,10 +12932,17 @@ function cleanDesc(raw) {
   s = s.replace(/\b\d+(?:\.\d+)*\b/g, "");
   s = s.replace(/\b(WEB PMTS?|ONLINE PMT|BILL PAY|PROPRTYPAY|CASH DISB|DES:|INDN:|CO ID:|PPD|CCD|TEL|PMT)\b/g, "");
   s = s.replace(SELF, "");
-  s = s.replace(/\.(COM|NET|ORG)\b/g, "").replace(/\*.*$/, "");
+  s = s.replace(/\.(COM|NET|ORG)\b/g, "");
+  s = s.replace(/^(SQ|TST|SP|PY|PAYPAL|TOAST|CLOVER|IC)\s*\*\s*/, "");
+  s = s.replace(/\*.*$/, "");
+  s = s.replace(/\s*#?\s*\d{3,6}\s*$/, "");
+  s = s.replace(/^[A-Z]?\d{3,5}\s+(?:[A-Z]{2,3}\s+)?/, "");
+  s = s.replace(/\s+\d{1,2}$/, "");
   s = s.replace(/[^A-Z0-9&' -]/g, " ").replace(/\s+/g, " ").replace(/[-\s]+$/, "").trim();
-  return s.replace(/\b[A-Z]+\b/g, (w) => w.length <= 3 ? w : w[0] + w.slice(1).toLowerCase());
+  const ACRONYM = /^(USA|ATM|LLC|BP|AMC|CVS|KFC|IHOP|NYC|NJ|NY|FL|DMV|EZ|TV|AAA)$/;
+  return s.replace(/[A-Z]+(?:'[A-Z]+)?/g, (w) => ACRONYM.test(w) ? w : w[0] + w.slice(1).toLowerCase());
 }
+module.exports = { cleanDesc, VENDOR_MAP };
 const fmt$ = (n) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 function normalizeDate(raw) {
   if (!raw) return "";
@@ -13534,6 +13542,7 @@ function ExpenseTracker() {
     el.scrollTo({ left: Math.max(0, Math.min(target, max)), behavior: "smooth" });
   }, [view]);
   const [vendorTab, setVendorTab] = useState("queue");
+  const [cleanupView, setCleanupView] = useState("merges");
   const [period, setPeriod] = useState("month");
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
@@ -13723,6 +13732,39 @@ function ExpenseTracker() {
     });
     setLastAssigned({ key, prevCat, newCat: cat, name: vendor == null ? void 0 : vendor.name });
   }, [vendors, vendorMap]);
+  const applyVendorCleanup = () => {
+    const groups = {};
+    transactions.forEach((t) => {
+      const raw = (t.description || "").trim();
+      if (!raw) return;
+      const clean = cleanDesc(raw) || "(unknown)";
+      if (!groups[clean]) groups[clean] = /* @__PURE__ */ new Set();
+      groups[clean].add(t.category || "");
+    });
+    const isSplit = {};
+    Object.entries(groups).forEach(([clean, cats]) => {
+      const real = [...cats].filter(Boolean);
+      isSplit[clean] = new Set(real).size > 1;
+    });
+    const newNameFor = (t) => {
+      const raw = (t.description || "").trim();
+      const clean = cleanDesc(raw) || "(unknown)";
+      return isSplit[clean] && t.category ? `${clean} \xB7 ${t.category}` : clean;
+    };
+    const nextMap = { ...vendorMap };
+    transactions.forEach((t) => {
+      const oldKey = (t.description || "").trim().toLowerCase();
+      const newKey = newNameFor(t).toLowerCase();
+      if (oldKey === newKey) return;
+      const cat = vendorMap[oldKey] || t.category;
+      if (cat && !nextMap[newKey]) nextMap[newKey] = cat;
+    });
+    setTransactions((prev) => prev.map((t) => {
+      const nn = newNameFor(t);
+      return nn && nn !== (t.description || "").trim() ? { ...t, description: nn, rawDescription: t.rawDescription || t.description } : t;
+    }));
+    setVendorMap(nextMap);
+  };
   const unassignVendor = (key) => setVendorMap((m) => {
     const n = { ...m };
     delete n[key];
@@ -13950,7 +13992,7 @@ function ExpenseTracker() {
         @keyframes modalIn{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
         @keyframes slideUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
         @keyframes dropIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
-      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px 8px", display: "flex", alignItems: "center", gap: 4, justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, letterSpacing: "-.3px", flexShrink: 0 } }, "Ledger ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, fontWeight: 600, color: T.text4, letterSpacing: 0 } }, "v19")), /* @__PURE__ */ React.createElement("div", { ref: navScrollRef, className: "nav-scroll", style: { display: "flex", gap: 0, overflowX: "auto", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch", scrollBehavior: "smooth", flex: 1, minWidth: 0 } }, ["dashboard", "averages", "categories", "transactions", "vendors", "records"].map((v) => /* @__PURE__ */ React.createElement(
+      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px 8px", display: "flex", alignItems: "center", gap: 4, justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, letterSpacing: "-.3px", flexShrink: 0 } }, "Ledger ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, fontWeight: 600, color: T.text4, letterSpacing: 0 } }, "v22")), /* @__PURE__ */ React.createElement("div", { ref: navScrollRef, className: "nav-scroll", style: { display: "flex", gap: 0, overflowX: "auto", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch", scrollBehavior: "smooth", flex: 1, minWidth: 0 } }, ["dashboard", "averages", "categories", "transactions", "vendors", "records"].map((v) => /* @__PURE__ */ React.createElement(
     "button",
     {
       key: v,
@@ -14335,6 +14377,117 @@ function ExpenseTracker() {
       const pctTxt = r.avg > 0 ? Math.round(r.cur / r.avg * 100) + "%" : "new";
       return /* @__PURE__ */ React.createElement("div", { key: r.cat, style: { padding: "12px 16px", borderBottom: `1px solid ${T.border}` } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 600, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, r.cat), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, fontWeight: 700 } }, "$", fmt$(r.cur)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text3 } }, "avg $", fmt$(r.avg)))), /* @__PURE__ */ React.createElement(Bar, { r }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 11, gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { color: bad ? "#e5484d" : "#30a46c", fontWeight: 600, flexShrink: 0 } }, bad ? "\u25B2" : "\u25BC", " $", fmt$(Math.abs(r.paceDiff)), " vs ", isCurrentMonth ? "pace" : "avg"), /* @__PURE__ */ React.createElement("span", { style: { color: T.text4, textAlign: "right", minWidth: 0 } }, pctTxt, " of typical \xB7 ", r.seen, "/", nMonths, " mo", r.fixedCount > 0 && ` \xB7 ${r.fixedCount} fixed`)), isCurrentMonth && r.anyLate && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 11, color: T.text3 } }, "$", fmt$(r.lateAmt), " not due until the ", r.lateDay, r.lateDay === 1 ? "st" : r.lateDay === 2 ? "nd" : r.lateDay === 3 ? "rd" : "th", " \u2014 excluded from pace"));
     })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.text4, padding: "10px 4px 0", lineHeight: 1.5 } }, "Averages come from the ", LOOKBACK, " complete months before ", monthName, " (", nMonths, " of them had data). Within that window, a month where a category had no spend counts as zero, so the average isn't inflated. ", isCurrentMonth ? "Pace respects timing: a bill that historically lands on the 26th isn't counted against you on the 10th \u2014 only spending that's actually spread across the month is prorated. Amounts identical for 3+ straight months are treated as fixed and used exactly." : "This month has ended, so it's compared against a full typical month.", " Use the month picker above to compare a different month. Transfers, credits and Cuban Palms excluded; shared counted at half."));
+  })(), view === "records" && (() => {
+    const groups = {};
+    transactions.forEach((t) => {
+      const raw = (t.description || "").trim();
+      if (!raw) return;
+      const clean = cleanDesc(raw) || "(unknown)";
+      if (!groups[clean]) groups[clean] = { clean, raws: {}, cats: {}, n: 0, total: 0 };
+      const g = groups[clean];
+      g.raws[raw] = (g.raws[raw] || 0) + 1;
+      g.n++;
+      g.total += t.amount;
+      if (t.category) g.cats[t.category] = (g.cats[t.category] || 0) + 1;
+    });
+    const merges = Object.values(groups).map((g) => ({
+      ...g,
+      variants: Object.keys(g.raws).length,
+      catList: Object.keys(g.cats),
+      split: Object.keys(g.cats).length > 1
+    })).filter((g) => g.variants > 1 || Object.keys(g.raws)[0] !== g.clean).sort((a, b) => b.variants - a.variants || b.total - a.total);
+    const finalMap = {};
+    transactions.forEach((t) => {
+      const raw = (t.description || "").trim();
+      if (!raw) return;
+      const clean = cleanDesc(raw) || "(unknown)";
+      const split = Object.keys(groups[clean].cats).length > 1;
+      const nm = split && t.category ? `${clean} \xB7 ${t.category}` : clean;
+      if (!finalMap[nm]) finalMap[nm] = { name: nm, n: 0, total: 0, cats: {} };
+      finalMap[nm].n++;
+      finalMap[nm].total += t.amount;
+      if (t.category) finalMap[nm].cats[t.category] = 1;
+    });
+    const allVendors = Object.values(finalMap).sort((a, b) => a.name.localeCompare(b.name, void 0, { sensitivity: "base" }));
+    const copyList = () => {
+      const txt = cleanupView === "merges" ? merges.map((g) => `${g.clean}
+` + Object.keys(g.raws).map((r) => `    <- ${r}`).join("\n")).join("\n") : allVendors.map((v) => `${v.name}	${v.n} tx	$${v.total.toFixed(2)}`).join("\n");
+      try {
+        navigator.clipboard.writeText(txt);
+        alert("Copied " + (cleanupView === "merges" ? merges.length + " merges" : allVendors.length + " vendors") + " to the clipboard.");
+      } catch (e) {
+        alert("Couldn't copy on this device.");
+      }
+    };
+    const nMerged = merges.filter((g) => g.variants > 1 && !g.split).length;
+    const nSplit = merges.filter((g) => g.split).length;
+    const nRenamed = merges.filter((g) => g.variants === 1 && !g.split).length;
+    return /* @__PURE__ */ React.createElement("div", { style: {
+      background: T.bgCard,
+      borderRadius: 12,
+      border: `1px solid ${T.border}`,
+      marginBottom: 16,
+      overflow: "hidden"
+    } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 14px", borderBottom: `1px solid ${T.border}` } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em", color: T.text3 } }, "Vendor name cleanup \u2014 review"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: T.text2, marginTop: 4 } }, nMerged, " merge into one vendor \xB7 ", nSplit, " kept separate by category \xB7 ", nRenamed, " renamed only."), merges.length > 0 && /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => {
+          if (window.confirm("Export a backup first if you haven't.\n\nThis renames vendors across all transactions. Categories on individual transactions are not changed. Continue?")) applyVendorCleanup();
+        },
+        style: {
+          marginTop: 10,
+          width: "100%",
+          padding: "9px 12px",
+          borderRadius: 8,
+          border: "none",
+          background: T.accent,
+          color: "#fff",
+          fontSize: 13,
+          fontWeight: 600
+        }
+      },
+      "Apply cleanup to ",
+      merges.length,
+      " vendor",
+      merges.length === 1 ? "" : "s"
+    )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, padding: "10px 14px 0" } }, [["merges", `Merges (${merges.length})`], ["all", `All vendors A\u2013Z (${allVendors.length})`]].map(([k, label]) => /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: k,
+        onClick: () => setCleanupView(k),
+        style: {
+          flex: 1,
+          padding: "7px 8px",
+          borderRadius: 8,
+          fontSize: 12,
+          fontWeight: 600,
+          border: `1px solid ${cleanupView === k ? T.accent : T.border}`,
+          background: cleanupView === k ? `${T.accent}15` : T.bgCard,
+          color: cleanupView === k ? T.accent : T.text3
+        }
+      },
+      label
+    )), /* @__PURE__ */ React.createElement("button", { onClick: copyList, style: {
+      padding: "7px 10px",
+      borderRadius: 8,
+      fontSize: 12,
+      border: `1px solid ${T.border}`,
+      background: T.bgCard,
+      color: T.text3
+    } }, "Copy")), cleanupView === "all" && /* @__PURE__ */ React.createElement("div", { style: { maxHeight: 460, overflowY: "auto", marginTop: 10 } }, allVendors.map((v) => /* @__PURE__ */ React.createElement("div", { key: v.name, style: {
+      display: "flex",
+      justifyContent: "space-between",
+      gap: 10,
+      padding: "8px 14px",
+      borderBottom: `1px solid ${T.border}`
+    } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, v.name), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4, flexShrink: 0 } }, v.n, " tx \xB7 $", fmt$(v.total))))), /* @__PURE__ */ React.createElement("div", { style: { maxHeight: 420, overflowY: "auto", display: cleanupView === "merges" ? "block" : "none" } }, merges.map((g) => /* @__PURE__ */ React.createElement("div", { key: g.clean, style: { padding: "9px 14px", borderBottom: `1px solid ${T.border}` } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, fontWeight: 600 } }, g.clean), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: T.text4, flexShrink: 0 } }, g.n, " tx \xB7 $", fmt$(g.total))), g.split && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "#FF9500", marginTop: 3 } }, "Stays split by category: ", g.catList.join(", ")), Object.entries(g.raws).map(([raw, c]) => /* @__PURE__ */ React.createElement("div", { key: raw, style: {
+      fontSize: 11,
+      color: T.text4,
+      marginTop: 2,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap"
+    } }, "\u2190 ", raw, c > 1 ? ` (${c})` : "")))), merges.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "20px 14px", fontSize: 12, color: T.text3, textAlign: "center" } }, "Nothing to clean \u2014 every vendor name is already in its tidy form.")));
   })(), view === "records" && (() => {
     const bySrc = {};
     rangeTxs.forEach((t) => {
