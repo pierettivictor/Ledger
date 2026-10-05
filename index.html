@@ -12942,7 +12942,6 @@ function cleanDesc(raw) {
   const ACRONYM = /^(USA|ATM|LLC|BP|AMC|CVS|KFC|IHOP|NYC|NJ|NY|FL|DMV|EZ|TV|AAA)$/;
   return s.replace(/[A-Z]+(?:'[A-Z]+)?/g, (w) => ACRONYM.test(w) ? w : w[0] + w.slice(1).toLowerCase());
 }
-module.exports = { cleanDesc, VENDOR_MAP };
 const fmt$ = (n) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 function normalizeDate(raw) {
   if (!raw) return "";
@@ -13992,7 +13991,7 @@ function ExpenseTracker() {
         @keyframes modalIn{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
         @keyframes slideUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
         @keyframes dropIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
-      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px 8px", display: "flex", alignItems: "center", gap: 4, justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, letterSpacing: "-.3px", flexShrink: 0 } }, "Ledger ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, fontWeight: 600, color: T.text4, letterSpacing: 0 } }, "v22")), /* @__PURE__ */ React.createElement("div", { ref: navScrollRef, className: "nav-scroll", style: { display: "flex", gap: 0, overflowX: "auto", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch", scrollBehavior: "smooth", flex: 1, minWidth: 0 } }, ["dashboard", "averages", "categories", "transactions", "vendors", "records"].map((v) => /* @__PURE__ */ React.createElement(
+      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px 8px", display: "flex", alignItems: "center", gap: 4, justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, letterSpacing: "-.3px", flexShrink: 0 } }, "Ledger ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, fontWeight: 600, color: T.text4, letterSpacing: 0 } }, "v23")), /* @__PURE__ */ React.createElement("div", { ref: navScrollRef, className: "nav-scroll", style: { display: "flex", gap: 0, overflowX: "auto", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch", scrollBehavior: "smooth", flex: 1, minWidth: 0 } }, ["dashboard", "averages", "categories", "transactions", "vendors", "records"].map((v) => /* @__PURE__ */ React.createElement(
     "button",
     {
       key: v,
