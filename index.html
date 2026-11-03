@@ -14048,7 +14048,7 @@ function ExpenseTracker() {
         @keyframes modalIn{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
         @keyframes slideUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
         @keyframes dropIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
-      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px 8px", display: "flex", alignItems: "center", gap: 4, justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, letterSpacing: "-.3px", flexShrink: 0 } }, "Ledger ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, fontWeight: 600, color: T.text4, letterSpacing: 0 } }, "v28")), /* @__PURE__ */ React.createElement("div", { ref: navScrollRef, className: "nav-scroll", style: { display: "flex", gap: 0, overflowX: "auto", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch", scrollBehavior: "smooth", flex: 1, minWidth: 0 } }, ["dashboard", "averages", "categories", "transactions", "vendors", "records"].map((v) => /* @__PURE__ */ React.createElement(
+      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px 8px", display: "flex", alignItems: "center", gap: 4, justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, letterSpacing: "-.3px", flexShrink: 0 } }, "Ledger ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, fontWeight: 600, color: T.text4, letterSpacing: 0 } }, "v29")), /* @__PURE__ */ React.createElement("div", { ref: navScrollRef, className: "nav-scroll", style: { display: "flex", gap: 0, overflowX: "auto", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch", scrollBehavior: "smooth", flex: 1, minWidth: 0 } }, ["dashboard", "averages", "categories", "transactions", "vendors", "records"].map((v) => /* @__PURE__ */ React.createElement(
     "button",
     {
       key: v,
@@ -14228,7 +14228,7 @@ function ExpenseTracker() {
             padding: "5px 16px 5px 60px",
             background: "#F9F9FB",
             borderTop: `1px solid ${T.border}`
-          } }, /* @__PURE__ */ React.createElement("span", { style: { flex: 1, fontSize: 11, color: T.text3 } }, t.date), t.shared && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, color: T.orange, marginRight: 6 } }, "\xBD"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: t.isCredit ? T.green : T.text2, fontWeight: 500 } }, t.isCredit ? "\u2212" : "", "$", fmt$(t.amount)))));
+          } }, /* @__PURE__ */ React.createElement("span", { style: { flex: 1, fontSize: 11, color: T.text3 } }, t.date), t.shared && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, color: T.orange, marginRight: 6 } }, "\xBD"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: t.isCredit ? T.green : T.text2, fontWeight: 500 } }, t.isCredit ? "+" : "", "$", fmt$(t.amount)))));
         }));
       }));
     }), /* @__PURE__ */ React.createElement("div", { style: { height: 8 } })), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderRadius: 10, overflow: "hidden", border: `1px solid ${T.border}`, marginBottom: 16 } }, [
@@ -15009,7 +15009,7 @@ function ExpenseTracker() {
           flexShrink: 0,
           marginLeft: 2,
           color: isCredit ? T.green : isTransfer ? T.text3 : T.text2
-        } }, isCredit ? /* @__PURE__ */ React.createElement("span", { style: { color: T.green } }, "\u2212$", fmt$(t.amount)) : `$${fmt$(t.amount)}`), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }), !editMode && /* @__PURE__ */ React.createElement(
+        } }, isCredit ? `+$${fmt$(t.amount)}` : `$${fmt$(t.amount)}`), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }), !editMode && /* @__PURE__ */ React.createElement(
           "button",
           {
             onClick: (e) => {
