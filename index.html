@@ -19,7 +19,11 @@
   var __getProtoOf = Object.getPrototypeOf;
   var __hasOwnProp = Object.prototype.hasOwnProperty;
   var __commonJS = (cb, mod) => function __require() {
-    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+    try {
+      return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+    } catch (e) {
+      throw mod = 0, e;
+    }
   };
   var __copyProps = (to, from, except, desc) => {
     if (from && typeof from === "object" || typeof from === "function") {
@@ -38,9 +42,9 @@
     mod
   ));
 
-  // .npm-global/lib/node_modules/react/cjs/react.production.js
+  // ../../../opt/npm-tools/node_modules/react/cjs/react.production.js
   var require_react_production = __commonJS({
-    ".npm-global/lib/node_modules/react/cjs/react.production.js"(exports) {
+    "../../../opt/npm-tools/node_modules/react/cjs/react.production.js"(exports) {
       "use strict";
       var REACT_ELEMENT_TYPE = /* @__PURE__ */ Symbol.for("react.transitional.element");
       var REACT_PORTAL_TYPE = /* @__PURE__ */ Symbol.for("react.portal");
@@ -475,13 +479,13 @@
       exports.useTransition = function() {
         return ReactSharedInternals.H.useTransition();
       };
-      exports.version = "19.2.5";
+      exports.version = "19.2.8";
     }
   });
 
-  // .npm-global/lib/node_modules/react/index.js
+  // ../../../opt/npm-tools/node_modules/react/index.js
   var require_react = __commonJS({
-    ".npm-global/lib/node_modules/react/index.js"(exports, module) {
+    "../../../opt/npm-tools/node_modules/react/index.js"(exports, module) {
       "use strict";
       if (true) {
         module.exports = require_react_production();
@@ -491,9 +495,9 @@
     }
   });
 
-  // .npm-global/lib/node_modules/react-dom/node_modules/scheduler/cjs/scheduler.production.js
+  // ../../../opt/npm-tools/node_modules/scheduler/cjs/scheduler.production.js
   var require_scheduler_production = __commonJS({
-    ".npm-global/lib/node_modules/react-dom/node_modules/scheduler/cjs/scheduler.production.js"(exports) {
+    "../../../opt/npm-tools/node_modules/scheduler/cjs/scheduler.production.js"(exports) {
       "use strict";
       function push(heap, node) {
         var index = heap.length;
@@ -764,9 +768,9 @@
     }
   });
 
-  // .npm-global/lib/node_modules/react-dom/node_modules/scheduler/index.js
+  // ../../../opt/npm-tools/node_modules/scheduler/index.js
   var require_scheduler = __commonJS({
-    ".npm-global/lib/node_modules/react-dom/node_modules/scheduler/index.js"(exports, module) {
+    "../../../opt/npm-tools/node_modules/scheduler/index.js"(exports, module) {
       "use strict";
       if (true) {
         module.exports = require_scheduler_production();
@@ -776,9 +780,9 @@
     }
   });
 
-  // .npm-global/lib/node_modules/react-dom/cjs/react-dom.production.js
+  // ../../../opt/npm-tools/node_modules/react-dom/cjs/react-dom.production.js
   var require_react_dom_production = __commonJS({
-    ".npm-global/lib/node_modules/react-dom/cjs/react-dom.production.js"(exports) {
+    "../../../opt/npm-tools/node_modules/react-dom/cjs/react-dom.production.js"(exports) {
       "use strict";
       var React2 = require_react();
       function formatProdErrorMessage(code) {
@@ -921,13 +925,13 @@
       exports.useFormStatus = function() {
         return ReactSharedInternals.H.useHostTransitionStatus();
       };
-      exports.version = "19.2.5";
+      exports.version = "19.2.8";
     }
   });
 
-  // .npm-global/lib/node_modules/react-dom/index.js
+  // ../../../opt/npm-tools/node_modules/react-dom/index.js
   var require_react_dom = __commonJS({
-    ".npm-global/lib/node_modules/react-dom/index.js"(exports, module) {
+    "../../../opt/npm-tools/node_modules/react-dom/index.js"(exports, module) {
       "use strict";
       function checkDCE() {
         if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ === "undefined" || typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.checkDCE !== "function") {
@@ -951,9 +955,9 @@
     }
   });
 
-  // .npm-global/lib/node_modules/react-dom/cjs/react-dom-client.production.js
+  // ../../../opt/npm-tools/node_modules/react-dom/cjs/react-dom-client.production.js
   var require_react_dom_client_production = __commonJS({
-    ".npm-global/lib/node_modules/react-dom/cjs/react-dom-client.production.js"(exports) {
+    "../../../opt/npm-tools/node_modules/react-dom/cjs/react-dom-client.production.js"(exports) {
       "use strict";
       var Scheduler = require_scheduler();
       var React2 = require_react();
@@ -12594,12 +12598,12 @@
         }
       };
       var isomorphicReactPackageVersion$jscomp$inline_1840 = React2.version;
-      if ("19.2.5" !== isomorphicReactPackageVersion$jscomp$inline_1840)
+      if ("19.2.8" !== isomorphicReactPackageVersion$jscomp$inline_1840)
         throw Error(
           formatProdErrorMessage(
             527,
             isomorphicReactPackageVersion$jscomp$inline_1840,
-            "19.2.5"
+            "19.2.8"
           )
         );
       ReactDOMSharedInternals.findDOMNode = function(componentOrElement) {
@@ -12617,10 +12621,10 @@
       };
       var internals$jscomp$inline_2347 = {
         bundleType: 0,
-        version: "19.2.5",
+        version: "19.2.8",
         rendererPackageName: "react-dom",
         currentDispatcherRef: ReactSharedInternals,
-        reconcilerVersion: "19.2.5"
+        reconcilerVersion: "19.2.8"
       };
       if ("undefined" !== typeof __REACT_DEVTOOLS_GLOBAL_HOOK__) {
         hook$jscomp$inline_2348 = __REACT_DEVTOOLS_GLOBAL_HOOK__;
@@ -12688,13 +12692,13 @@
         listenToAllSupportedEvents(container);
         return new ReactDOMHydrationRoot(initialChildren);
       };
-      exports.version = "19.2.5";
+      exports.version = "19.2.8";
     }
   });
 
-  // .npm-global/lib/node_modules/react-dom/client.js
+  // ../../../opt/npm-tools/node_modules/react-dom/client.js
   var require_client = __commonJS({
-    ".npm-global/lib/node_modules/react-dom/client.js"(exports, module) {
+    "../../../opt/npm-tools/node_modules/react-dom/client.js"(exports, module) {
       "use strict";
       function checkDCE() {
         if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ === "undefined" || typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.checkDCE !== "function") {
@@ -12718,7 +12722,7 @@
     }
   });
 
-  // ../../tmp/react-entry.js
+  // ../../../tmp/react-entry.js
   var import_react = __toESM(require_react());
   var ReactDOMClient = __toESM(require_client());
   window.React = import_react.default;
@@ -14044,29 +14048,7 @@ function ExpenseTracker() {
         @keyframes modalIn{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
         @keyframes slideUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
         @keyframes dropIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
-      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px 8px", display: "flex", alignItems: "center", gap: 4, justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, letterSpacing: "-.3px", flexShrink: 0, display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", null, "Ledger ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, fontWeight: 600, color: T.text4, letterSpacing: 0 } }, "v27")), /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      onClick: undo,
-      disabled: undoStack.length === 0,
-      title: undoStack.length ? `Undo (${undoStack.length} step${undoStack.length === 1 ? "" : "s"} available)` : "Nothing to undo",
-      style: {
-        fontSize: 11,
-        fontWeight: 600,
-        fontFamily: "inherit",
-        padding: "3px 9px",
-        borderRadius: 12,
-        border: `1px solid ${undoStack.length ? T.border : "transparent"}`,
-        background: undoStack.length ? T.bg : "transparent",
-        color: undoStack.length ? T.text2 : T.text4,
-        opacity: undoStack.length ? 1 : 0.35,
-        cursor: undoStack.length ? "pointer" : "default",
-        flexShrink: 0
-      }
-    },
-    "\u21A9 Undo",
-    undoStack.length > 1 ? ` ${undoStack.length}` : ""
-  )), /* @__PURE__ */ React.createElement("div", { ref: navScrollRef, className: "nav-scroll", style: { display: "flex", gap: 0, overflowX: "auto", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch", scrollBehavior: "smooth", flex: 1, minWidth: 0 } }, ["dashboard", "averages", "categories", "transactions", "vendors", "records"].map((v) => /* @__PURE__ */ React.createElement(
+      `), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 95 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 12px 8px", display: "flex", alignItems: "center", gap: 4, justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 700, letterSpacing: "-.3px", flexShrink: 0 } }, "Ledger ", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, fontWeight: 600, color: T.text4, letterSpacing: 0 } }, "v28")), /* @__PURE__ */ React.createElement("div", { ref: navScrollRef, className: "nav-scroll", style: { display: "flex", gap: 0, overflowX: "auto", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch", scrollBehavior: "smooth", flex: 1, minWidth: 0 } }, ["dashboard", "averages", "categories", "transactions", "vendors", "records"].map((v) => /* @__PURE__ */ React.createElement(
     "button",
     {
       key: v,
@@ -14076,7 +14058,30 @@ function ExpenseTracker() {
       style: { textTransform: "capitalize", fontSize: 12, padding: "5px 8px", flexShrink: 0, scrollSnapAlign: "center", whiteSpace: "nowrap" }
     },
     v === "records" ? "Records" : v
-  )))), /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px 10px", display: "flex", alignItems: "center", gap: 8, borderTop: `1px solid ${T.border}` } }, /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setShowPeriodPicker((p) => !p), style: {
+  ))), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: undo,
+      disabled: undoStack.length === 0,
+      title: undoStack.length ? `Undo (${undoStack.length} available)` : "Nothing to undo",
+      style: {
+        fontSize: 16,
+        fontFamily: "inherit",
+        lineHeight: 1,
+        padding: "5px 8px",
+        borderRadius: 10,
+        border: "none",
+        background: "none",
+        color: undoStack.length ? T.text2 : T.text4,
+        opacity: undoStack.length ? 1 : 0.3,
+        cursor: undoStack.length ? "pointer" : "default",
+        flexShrink: 0,
+        marginLeft: 2
+      }
+    },
+    "\u21A9",
+    undoStack.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, fontWeight: 700, marginLeft: 1 } }, undoStack.length)
+  )), /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 12px 10px", display: "flex", alignItems: "center", gap: 8, borderTop: `1px solid ${T.border}` } }, /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setShowPeriodPicker((p) => !p), style: {
     display: "flex",
     alignItems: "center",
     gap: 5,
@@ -15110,16 +15115,14 @@ function ExpenseTracker() {
     const catTotal = sumMyShare(rangeTxs);
     const catRows = categories.map((c) => ({ cat: c, amt: sumMyShare(rangeTxs.filter((t) => t.category === c)) })).filter((r) => r.amt > 0).length;
     const uncatAmt = sumMyShare(rangeTxs.filter((t) => !t.category));
-    return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderRadius: 14, boxShadow: T.shadow, border: `2px solid ${T.accent}`, padding: "14px 16px", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.accent, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 2 } }, "Total \u2014 my expenses"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 26, fontWeight: 700, color: T.text, letterSpacing: "-.5px" } }, "$", fmt$(catTotal)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text3, marginTop: 3 } }, catRows, " categories with spend", uncatAmt > 0 && /* @__PURE__ */ React.createElement("span", null, " \xB7 ", /* @__PURE__ */ React.createElement("b", { style: { color: T.text2 } }, "$", fmt$(uncatAmt)), " uncategorized")), Math.abs(catTotal - myTotal) > 0.01 && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.danger, marginTop: 4 } }, "Dashboard shows $", fmt$(myTotal), " \u2014 $", fmt$(Math.abs(catTotal - myTotal)), " difference"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.text4, marginTop: 5 } }, "Excludes transfers, credits, and Cuban Palms. Shared counted at half.")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, marginBottom: 16, alignItems: "center" } }, /* @__PURE__ */ React.createElement("input", { placeholder: "New category name\u2026", value: newCat, onChange: (e) => setNewCat(e.target.value), onKeyDown: (e) => e.key === "Enter" && addCategory(), style: { flex: 1, maxWidth: 280 } }), /* @__PURE__ */ React.createElement("button", { className: "action-btn", onClick: addCategory }, "Add")), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 14, overflow: "hidden", boxShadow: T.shadow } }, categories.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: 32, textAlign: "center", color: T.text4, fontSize: 13 } }, "No categories yet."), [...categories].sort((a, b) => {
-      const totalA = sumMyShare(rangeTxs.filter((t) => t.category === a));
-      const totalB = sumMyShare(rangeTxs.filter((t) => t.category === b));
-      return totalB - totalA;
-    }).map((cat, i, arr) => {
+    return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, borderRadius: 14, boxShadow: T.shadow, border: `2px solid ${T.accent}`, padding: "14px 16px", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.accent, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 2 } }, "Total \u2014 my expenses"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 26, fontWeight: 700, color: T.text, letterSpacing: "-.5px" } }, "$", fmt$(catTotal)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: T.text3, marginTop: 3 } }, catRows, " categories with spend", uncatAmt > 0 && /* @__PURE__ */ React.createElement("span", null, " \xB7 ", /* @__PURE__ */ React.createElement("b", { style: { color: T.text2 } }, "$", fmt$(uncatAmt)), " uncategorized")), Math.abs(catTotal - myTotal) > 0.01 && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.danger, marginTop: 4 } }, "Dashboard shows $", fmt$(myTotal), " \u2014 $", fmt$(Math.abs(catTotal - myTotal)), " difference"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: T.text4, marginTop: 5 } }, "Excludes transfers, credits, and Cuban Palms. Shared counted at half.")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, marginBottom: 16, alignItems: "center" } }, /* @__PURE__ */ React.createElement("input", { placeholder: "New category name\u2026", value: newCat, onChange: (e) => setNewCat(e.target.value), onKeyDown: (e) => e.key === "Enter" && addCategory(), style: { flex: 1, maxWidth: 280 } }), /* @__PURE__ */ React.createElement("button", { className: "action-btn", onClick: addCategory }, "Add")), /* @__PURE__ */ React.createElement("div", { style: { background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 14, overflow: "hidden", boxShadow: T.shadow } }, categories.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: 32, textAlign: "center", color: T.text4, fontSize: 13 } }, "No categories yet."), [...categories].sort(
+      (a, b) => sumMyShare(rangeTxs.filter((t) => t.category === b)) - sumMyShare(rangeTxs.filter((t) => t.category === a))
+    ).map((cat, i, arr) => {
       const color = getCatColor(cat);
-      const catTxs = rangeTxs.filter((t) => t.category === cat);
+      const catTxs = rangeTxs.filter((t) => t.category === cat && countsAsExpense(t));
       const fullTotal = catTxs.reduce((s, t) => s + t.amount, 0);
       const sharedAmt = catTxs.filter((t) => t.shared).reduce((s, t) => s + t.amount, 0);
-      const myTotal_cat = fullTotal - sharedAmt * 0.5;
+      const myTotal_cat = sumMyShare(catTxs);
       const hasShared = sharedAmt > 0;
       const months = new Set(catTxs.map((t) => {
         var _a;
